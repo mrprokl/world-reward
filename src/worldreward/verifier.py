@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import json
 import os
 import time
@@ -10,11 +9,9 @@ from pathlib import Path
 
 from google import genai
 
-from worldreward.exceptions import VerificationError
+from worldreward.dataset_writer import load_scenarios_csv
+from worldreward.exceptions import GeminiAPIError, VerificationError
 from worldreward.models import RewardScore, VerificationResult
-
-
-VERIFIER_MODEL = "gemini-3-pro-preview"
 
 
 class Verifier:
@@ -30,16 +27,23 @@ class Verifier:
         -1 (INCORRECT):     VLM answer contradicts expected answer.
     """
 
-    def __init__(self, api_key: str | None = None) -> None:
+    DEFAULT_MODEL = "gemini-3-pro-preview"
+
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         """Initialize the verifier with a Gemini client.
 
         Args:
             api_key: Google AI Studio API key. Falls back to GEMINI_API_KEY env var.
+            model: Gemini model name. Defaults to gemini-3-pro-preview.
+
+        Raises:
+            GeminiAPIError: If no API key is provided or found in environment.
         """
         resolved_key = api_key or os.getenv("GEMINI_API_KEY")
         if not resolved_key:
-            raise VerificationError("N/A", "No API key. Set GEMINI_API_KEY.")
+            raise GeminiAPIError("No API key provided. Set GEMINI_API_KEY in .env or pass api_key.")
         self._client = genai.Client(api_key=resolved_key)
+        self._model = model or self.DEFAULT_MODEL
 
     def verify_dataset(
         self,
@@ -55,7 +59,7 @@ class Verifier:
         Returns:
             List of VerificationResult instances.
         """
-        scenarios = self._load_scenarios(dataset_path)
+        scenarios = load_scenarios_csv(dataset_path)
         results: list[VerificationResult] = []
 
         print(f"🔍 Verifying {len(scenarios)} scenarios with Gemini 3 Pro...")
@@ -113,7 +117,7 @@ class Verifier:
                 )
 
             response = self._client.models.generate_content(
-                model=VERIFIER_MODEL,
+                model=self._model,
                 contents=[
                     video_file,
                     prompt,
@@ -154,12 +158,6 @@ class Verifier:
             reward=reward,
             video_path=str(video_path),
         )
-
-    @staticmethod
-    def _load_scenarios(dataset_path: Path) -> list[dict]:
-        """Load scenarios from a CSV file."""
-        with open(dataset_path, newline="", encoding="utf-8") as f:
-            return list(csv.DictReader(f))
 
 
 def _build_verification_prompt(verification_question: str) -> str:

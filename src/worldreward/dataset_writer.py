@@ -1,4 +1,4 @@
-"""CSV dataset writer for generated scenarios."""
+"""CSV dataset reader/writer for generated scenarios."""
 
 from __future__ import annotations
 
@@ -17,6 +17,19 @@ FIELDNAMES = [
     "expected_answer",
     "confidence",
 ]
+
+
+def load_scenarios_csv(dataset_path: Path) -> list[dict]:
+    """Load scenarios from a CSV file as a list of dictionaries.
+
+    Args:
+        dataset_path: Path to the scenario CSV file.
+
+    Returns:
+        List of scenario dictionaries.
+    """
+    with open(dataset_path, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
 
 
 def write_dataset(scenarios: list[Scenario], output_path: Path) -> Path:

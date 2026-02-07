@@ -41,8 +41,17 @@ PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_drivi
 ## Pipeline
 
 ```
-YAML Config → [Gemini 3 Pro] → scenarios.csv → [Veo 3.1] → videos/ → [Gemini 3 Pro] → results.csv
-               (generate)                       (render)              (verify + score)
+YAML Config → [Gemini 3 Pro] → datasets/ → [Veo 3.1] → videos/ → [Gemini 3 Pro] → results/
+               (generate)                   (render)               (verify + score)
+```
+
+Each run is linked by a shared run ID (`{domain}_{timestamp}`):
+
+```
+output/
+├── datasets/   autonomous_driving_20260207_131855.csv
+├── videos/     autonomous_driving_20260207_131855/AD-001.mp4, AD-002.mp4, ...
+└── results/    results_autonomous_driving_20260207_131855.csv
 ```
 
 ## CLI Commands
@@ -119,17 +128,17 @@ PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 │   ├── prompt_builder.py   # Structured prompt construction (dataset + video prompts)
 │   ├── gemini_client.py    # Gemini API wrapper
 │   ├── generator.py        # Dataset generation orchestrator
-│   ├── video_generator.py  # Veo 3.1 batch video rendering
+│   ├── video_generator.py  # Veo 3.1 parallel video rendering
 │   ├── verifier.py         # Gemini 3 Pro video analysis + physics verification
 │   ├── scorer.py           # Reward aggregation + terminal reporting
-│   ├── dataset_writer.py   # CSV export
+│   ├── dataset_writer.py   # CSV read/write (shared loader)
 │   └── exceptions.py       # Custom domain errors
 ├── configs/
 │   ├── autonomous_driving.yaml
 │   └── public_safety.yaml
 ├── output/
 │   ├── datasets/           # Generated scenario CSV files
-│   ├── videos/             # Rendered videos from Veo 3.1
+│   ├── videos/             # Rendered videos grouped by run ID
 │   └── results/            # Verification results CSV files
 └── main.py                 # CLI entrypoint
 ```

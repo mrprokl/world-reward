@@ -6,7 +6,6 @@ then polled together until completion.
 
 from __future__ import annotations
 
-import csv
 import os
 import time
 from dataclasses import dataclass
@@ -15,11 +14,10 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-from worldreward.exceptions import VideoGenerationError
+from worldreward.dataset_writer import load_scenarios_csv
+from worldreward.exceptions import GeminiAPIError, VideoGenerationError
 
 
-VEO_MODEL = "veo-3.1-generate-preview"
-POLL_INTERVAL_SECONDS = 10
 NEGATIVE_PROMPT = "cartoon, drawing, animation, low quality, blurry, watermark, text overlay"
 
 
@@ -42,16 +40,24 @@ class VideoGenerator:
     All generation requests are launched in parallel, then polled together.
     """
 
-    def __init__(self, api_key: str | None = None) -> None:
+    DEFAULT_MODEL = "veo-3.1-generate-preview"
+    POLL_INTERVAL_SECONDS = 10
+
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         """Initialize the Veo client.
 
         Args:
             api_key: Google AI Studio API key. Falls back to GEMINI_API_KEY env var.
+            model: Veo model name. Defaults to veo-3.1-generate-preview.
+
+        Raises:
+            GeminiAPIError: If no API key is provided or found in environment.
         """
         resolved_key = api_key or os.getenv("GEMINI_API_KEY")
         if not resolved_key:
-            raise VideoGenerationError("N/A", "No API key. Set GEMINI_API_KEY.")
+            raise GeminiAPIError("No API key provided. Set GEMINI_API_KEY in .env or pass api_key.")
         self._client = genai.Client(api_key=resolved_key)
+        self._model = model or self.DEFAULT_MODEL
 
     def generate_from_dataset(self, dataset_path: Path, output_dir: Path) -> list[dict]:
         """Generate videos for all scenarios in a CSV dataset (parallel).
@@ -66,12 +72,12 @@ class VideoGenerator:
             List of dicts mapping scenario_id to video file path.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
-        scenarios = self._load_scenarios(dataset_path)
+        scenarios = load_scenarios_csv(dataset_path)
         results: list[dict] = []
         pending: list[_PendingVideo] = []
 
         print(f"🎬 Generating {len(scenarios)} videos with Veo 3.1 (parallel)...")
-        print(f"   Model: {VEO_MODEL} | Duration: 8s | Resolution: 720p")
+        print(f"   Model: {self._model} | Duration: 8s | Resolution: 720p")
 
         # --- Phase 1: launch all operations ---
         for idx, scenario in enumerate(scenarios, start=1):
@@ -91,7 +97,7 @@ class VideoGenerator:
             try:
                 print(f"🚀 [{idx}/{len(scenarios)}] {scenario_id}: launching...")
                 operation = self._client.models.generate_videos(
-                    model=VEO_MODEL,
+                    model=self._model,
                     prompt=video_prompt,
                     config=types.GenerateVideosConfig(
                         negative_prompt=NEGATIVE_PROMPT,
@@ -116,7 +122,7 @@ class VideoGenerator:
 
         # --- Phase 2: poll all operations concurrently ---
         while any(not p.done for p in pending):
-            time.sleep(POLL_INTERVAL_SECONDS)
+            time.sleep(self.POLL_INTERVAL_SECONDS)
             for p in pending:
                 if p.done:
                     continue
@@ -160,9 +166,3 @@ class VideoGenerator:
         except Exception as e:
             pending.error = str(e)
             raise VideoGenerationError(pending.scenario_id, str(e)) from e
-
-    @staticmethod
-    def _load_scenarios(dataset_path: Path) -> list[dict]:
-        """Load scenarios from a CSV file."""
-        with open(dataset_path, newline="", encoding="utf-8") as f:
-            return list(csv.DictReader(f))
