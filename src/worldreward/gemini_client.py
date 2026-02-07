@@ -1,4 +1,4 @@
-"""Gemini API client wrapper for WorldBench."""
+"""Gemini API client wrapper for World Reward."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import os
 
 from google import genai
 
-from worldbench.exceptions import GeminiAPIError, ParsingError
+from worldreward.exceptions import GeminiAPIError, ParsingError
 
 
 class GeminiClient:

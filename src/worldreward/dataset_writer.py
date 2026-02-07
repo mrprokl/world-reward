@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from worldbench.models import Scenario
+from worldreward.models import Scenario
 
 FIELDNAMES = [
     "scenario_id",

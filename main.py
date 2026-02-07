@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""WorldBench CLI — Physics-verifiable evaluation pipeline for video/3D world models."""
+"""World Reward CLI — Physics-verifiable evaluation pipeline for video/3D world models."""
 
 from __future__ import annotations
 
@@ -10,23 +10,25 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from worldbench.config_loader import list_available_domains
-from worldbench.gemini_client import GeminiClient
-from worldbench.generator import ScenarioGenerator
-from worldbench.scorer import print_score_report, write_results
-from worldbench.verifier import Verifier
-from worldbench.video_generator import VideoGenerator
+from worldreward.config_loader import list_available_domains
+from worldreward.gemini_client import GeminiClient
+from worldreward.generator import ScenarioGenerator
+from worldreward.scorer import print_score_report, write_results
+from worldreward.verifier import Verifier
+from worldreward.video_generator import VideoGenerator
 
 PROJECT_ROOT = Path(__file__).parent
 CONFIGS_DIR = PROJECT_ROOT / "configs"
 OUTPUT_DIR = PROJECT_ROOT / "output"
+DATASETS_DIR = OUTPUT_DIR / "datasets"
 VIDEOS_DIR = OUTPUT_DIR / "videos"
+RESULTS_DIR = OUTPUT_DIR / "results"
 
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="WorldBench — Physics-verifiable evaluation pipeline for world models.",
+        description="World Reward — Physics-verifiable evaluation pipeline for world models.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -68,7 +70,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print("=" * 60)
-    print("  WorldBench — Dataset Generator")
+    print("  World Reward — Dataset Generator")
     print("=" * 60)
 
     client = GeminiClient(model=args.model)
@@ -76,7 +78,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
     output_path = generator.generate(
         config_path=config_path,
         count=args.count,
-        output_dir=OUTPUT_DIR,
+        output_dir=DATASETS_DIR,
     )
 
     print("=" * 60)
@@ -92,7 +94,7 @@ def cmd_videos(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print("=" * 60)
-    print("  WorldBench — Video Generator (Veo 3.1)")
+    print("  World Reward — Video Generator (Veo 3.1)")
     print("=" * 60)
 
     generator = VideoGenerator()
@@ -116,7 +118,7 @@ def cmd_verify(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print("=" * 60)
-    print("  WorldBench — Physics Verifier (Gemini 3 Pro)")
+    print("  World Reward — Physics Verifier (Gemini 3 Pro)")
     print("=" * 60)
 
     verifier = Verifier()
@@ -124,7 +126,7 @@ def cmd_verify(args: argparse.Namespace) -> None:
 
     if results:
         timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
-        results_path = OUTPUT_DIR / f"results_{timestamp}.csv"
+        results_path = RESULTS_DIR / f"results_{timestamp}.csv"
         write_results(results, results_path)
         print(f"\n💾 Results saved to: {results_path}")
 
@@ -143,7 +145,7 @@ def cmd_list_domains() -> None:
 
 
 def main() -> None:
-    """Entry point for WorldBench CLI."""
+    """Entry point for World Reward CLI."""
     load_dotenv(PROJECT_ROOT / ".env")
     load_dotenv(PROJECT_ROOT.parent / ".env")
 

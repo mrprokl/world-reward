@@ -34,8 +34,8 @@ cp .env.example .env
 
 # 4. Generate → Render → Verify (full pipeline)
 PYTHONPATH=src python3 main.py generate --domain autonomous_driving --count 5
-PYTHONPATH=src python3 main.py videos --dataset output/autonomous_driving_XXXX.csv
-PYTHONPATH=src python3 main.py verify --dataset output/autonomous_driving_XXXX.csv
+PYTHONPATH=src python3 main.py videos --dataset output/datasets/autonomous_driving_XXXX.csv
+PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_driving_XXXX.csv
 ```
 
 ## Pipeline
@@ -55,10 +55,10 @@ PYTHONPATH=src python3 main.py list-domains
 PYTHONPATH=src python3 main.py generate --domain autonomous_driving --count 20
 
 # Step 2: Render videos from dataset
-PYTHONPATH=src python3 main.py videos --dataset output/autonomous_driving_XXXX.csv
+PYTHONPATH=src python3 main.py videos --dataset output/datasets/autonomous_driving_XXXX.csv
 
 # Step 3: Verify videos against physics ground truth
-PYTHONPATH=src python3 main.py verify --dataset output/autonomous_driving_XXXX.csv
+PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_driving_XXXX.csv
 
 # Override Gemini model for generation
 PYTHONPATH=src python3 main.py generate --domain public_safety --count 10 --model gemini-2.5-flash
@@ -113,7 +113,7 @@ PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 ## Architecture
 
 ```
-├── src/worldbench/
+├── src/worldreward/
 │   ├── models.py           # Scenario, VerificationResult, RewardScore dataclasses
 │   ├── config_loader.py    # YAML config loading & validation
 │   ├── prompt_builder.py   # Structured prompt construction (dataset + video prompts)
@@ -127,7 +127,10 @@ PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 ├── configs/
 │   ├── autonomous_driving.yaml
 │   └── public_safety.yaml
-├── output/                 # Generated datasets, videos, and results
+├── output/
+│   ├── datasets/           # Generated scenario CSV files
+│   ├── videos/             # Rendered videos from Veo 3.1
+│   └── results/            # Verification results CSV files
 └── main.py                 # CLI entrypoint
 ```
 

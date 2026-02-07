@@ -1,4 +1,4 @@
-"""Scoring and reporting for WorldBench verification results."""
+"""Scoring and reporting for World Reward verification results."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-from worldbench.models import RewardScore, VerificationResult
+from worldreward.models import RewardScore, VerificationResult
 
 
 RESULT_FIELDNAMES = [
@@ -55,7 +55,7 @@ def print_score_report(results: list[VerificationResult]) -> None:
         return
 
     print("\n" + "=" * 70)
-    print("  WorldBench — Verification Score Report")
+    print("  World Reward — Verification Score Report")
     print("=" * 70)
 
     by_category: dict[str, list[VerificationResult]] = defaultdict(list)

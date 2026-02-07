@@ -1,5 +1,5 @@
 # Autonomous Driving Safety — Domain Configuration
-# WorldBench: Physics-verifiable scenarios for 3D world model evaluation
+# World Reward: Physics-verifiable scenarios for 3D world model evaluation
 
 domain_id: autonomous_driving
 domain_name: Autonomous Driving Safety

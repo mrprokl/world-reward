@@ -5,12 +5,13 @@ from __future__ import annotations
 import csv
 import json
 import os
+import time
 from pathlib import Path
 
 from google import genai
 
-from worldbench.exceptions import VerificationError
-from worldbench.models import RewardScore, VerificationResult
+from worldreward.exceptions import VerificationError
+from worldreward.models import RewardScore, VerificationResult
 
 
 VERIFIER_MODEL = "gemini-3-pro-preview"
@@ -99,6 +100,18 @@ class Verifier:
 
         try:
             video_file = self._client.files.upload(file=str(video_path))
+
+            # Wait for file to become ACTIVE (processing takes a few seconds)
+            while video_file.state.name == "PROCESSING":
+                time.sleep(2)
+                video_file = self._client.files.get(name=video_file.name)
+
+            if video_file.state.name != "ACTIVE":
+                raise VerificationError(
+                    scenario["scenario_id"],
+                    f"File upload failed — state: {video_file.state.name}",
+                )
+
             response = self._client.models.generate_content(
                 model=VERIFIER_MODEL,
                 contents=[

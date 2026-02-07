@@ -1,16 +1,16 @@
-"""Scenario generation orchestrator for WorldBench."""
+"""Scenario generation orchestrator for World Reward."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
 
-from worldbench.config_loader import load_domain_config
-from worldbench.dataset_writer import write_dataset
-from worldbench.exceptions import DatasetGenerationError
-from worldbench.gemini_client import GeminiClient
-from worldbench.models import Confidence, DomainConfig, Scenario
-from worldbench.prompt_builder import build_generation_prompt
+from worldreward.config_loader import load_domain_config
+from worldreward.dataset_writer import write_dataset
+from worldreward.exceptions import DatasetGenerationError
+from worldreward.gemini_client import GeminiClient
+from worldreward.models import Confidence, DomainConfig, Scenario
+from worldreward.prompt_builder import build_generation_prompt
 
 
 class ScenarioGenerator:

@@ -1,11 +1,11 @@
-"""Custom exceptions for WorldBench."""
+"""Custom exceptions for World Reward."""
 
 
-class WorldBenchError(Exception):
-    """Base exception for all WorldBench errors."""
+class WorldRewardError(Exception):
+    """Base exception for all World Reward errors."""
 
 
-class ConfigLoadError(WorldBenchError):
+class ConfigLoadError(WorldRewardError):
     """Raised when a domain configuration file cannot be loaded or is invalid."""
 
     def __init__(self, config_path: str, reason: str) -> None:
@@ -14,14 +14,14 @@ class ConfigLoadError(WorldBenchError):
         self.reason = reason
 
 
-class GeminiAPIError(WorldBenchError):
+class GeminiAPIError(WorldRewardError):
     """Raised when the Gemini API call fails."""
 
     def __init__(self, message: str) -> None:
         super().__init__(f"Gemini API error: {message}")
 
 
-class DatasetGenerationError(WorldBenchError):
+class DatasetGenerationError(WorldRewardError):
     """Raised when scenario generation fails."""
 
     def __init__(self, domain: str, reason: str) -> None:
@@ -30,7 +30,7 @@ class DatasetGenerationError(WorldBenchError):
         self.reason = reason
 
 
-class ParsingError(WorldBenchError):
+class ParsingError(WorldRewardError):
     """Raised when Gemini response cannot be parsed into scenarios."""
 
     def __init__(self, reason: str) -> None:
@@ -38,7 +38,7 @@ class ParsingError(WorldBenchError):
         self.reason = reason
 
 
-class VideoGenerationError(WorldBenchError):
+class VideoGenerationError(WorldRewardError):
     """Raised when Veo video generation fails."""
 
     def __init__(self, scenario_id: str, reason: str) -> None:
@@ -47,7 +47,7 @@ class VideoGenerationError(WorldBenchError):
         self.reason = reason
 
 
-class VerificationError(WorldBenchError):
+class VerificationError(WorldRewardError):
     """Raised when verification of a scenario fails."""
 
     def __init__(self, scenario_id: str, reason: str) -> None:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from worldbench.models import DomainConfig
+from worldreward.models import DomainConfig
 
 
 def build_generation_prompt(config: DomainConfig, count: int) -> str:
@@ -38,7 +38,7 @@ OUTPUT FORMAT: Return ONLY a valid JSON array. Each element must have these exac
 - "category": one of the category names listed above
 - "world_prompt": a vivid, detailed scene description (location, weather, lighting, objects present). 2-3 sentences.
 - "action": the specific physical event or action that triggers the test. 1 sentence.
-- "video_prompt": a CINEMATIC video generation prompt for Veo 3.1 that combines the scene and action into a single continuous shot description. Must describe the FULL EVENT unfolding visually (setup → action → aftermath) so the physical outcome is VISIBLE in the generated video. Do NOT mention the expected result — just describe what happens cinematically. 2-4 sentences. Use film language (camera angles, shot types, lighting).
+- "video_prompt": a CINEMATIC video generation prompt for Veo 3.1. Describes the scene setup and the action unfolding, then the camera LINGERS on the scene so the physical outcome is visible. CRITICAL: do NOT describe the physical result or aftermath — only describe the setup, the action happening, and the camera staying to observe. Let the video model decide what the outcome looks like. 2-4 sentences. Use film language (camera angles, shot types, lighting).
 - "verification_question": a precise yes/no question about the physical outcome. Must be answerable by WATCHING the generated video.
 - "expected_answer": either "yes" or "no" — the physically correct answer.
 - "confidence": "high" if the answer is near-certain based on physics, "medium" if very likely but edge cases exist, "low" if debatable.
@@ -46,8 +46,8 @@ OUTPUT FORMAT: Return ONLY a valid JSON array. Each element must have these exac
 RULES:
 1. Each scenario must test a SPECIFIC, UNAMBIGUOUS physical law or principle.
 2. The verification_question must be answerable by WATCHING the video output — the physical outcome must be VISIBLE.
-3. The video_prompt must show enough of the event's aftermath for a viewer to judge the outcome. Include the consequence in the shot description.
-4. The video_prompt must NEVER mention the expected answer or hint at correctness. It is a neutral cinematic description.
+3. The video_prompt must describe ONLY the setup and the action. The camera must stay on the scene long enough for the outcome to be observable, but the prompt must NOT describe what the outcome looks like. No words like "crumples", "shatters", "breaks", "remains intact", "bounces", "sinks", "floats" etc. in the video_prompt. The video model must render the physics on its own.
+4. The video_prompt must NEVER leak the expected answer, the physical result, or any hint about correctness.
 5. Distribute scenarios roughly evenly across categories.
 6. Vary the settings (different locations, times of day, weather, camera angles).
 7. Prefer "high" confidence scenarios — these are unit tests for reality.
@@ -59,7 +59,7 @@ EXAMPLE OUTPUT:
     "category": "vehicle_collision",
     "world_prompt": "Realistic highway, clear weather, daytime. A silver supercar travels at high speed on a straight section with a metal guardrail on the right side.",
     "action": "The car veers right and hits the metal guardrail at 300 km/h.",
-    "video_prompt": "Cinematic wide shot of a silver supercar racing down a sunlit highway at extreme speed. The car suddenly veers right and slams into a metal guardrail. Close-up tracking shot captures the moment of impact and the immediate aftermath, showing the state of both the car body and the guardrail. Slow motion, photorealistic, shot on ARRI Alexa.",
+    "video_prompt": "Cinematic wide shot of a silver supercar racing down a sunlit highway at extreme speed. The car suddenly veers right and slams into a metal guardrail. The camera holds on the scene in the seconds following the collision. Slow motion, photorealistic, shot on ARRI Alexa.",
     "verification_question": "Does the car retain its original undamaged shape after the impact?",
     "expected_answer": "no",
     "confidence": "high"

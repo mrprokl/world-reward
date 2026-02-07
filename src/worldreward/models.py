@@ -1,4 +1,4 @@
-"""Data models for WorldBench scenarios and domain configuration."""
+"""Data models for World Reward scenarios and domain configuration."""
 
 from __future__ import annotations
 

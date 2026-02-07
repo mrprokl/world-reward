@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 
-from worldbench.exceptions import ConfigLoadError
-from worldbench.models import CategoryConfig, DomainConfig
+from worldreward.exceptions import ConfigLoadError
+from worldreward.models import CategoryConfig, DomainConfig
 
 
 def load_domain_config(config_path: Path) -> DomainConfig:

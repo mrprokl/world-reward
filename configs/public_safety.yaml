@@ -1,5 +1,5 @@
 # Public Safety & Infrastructure — Domain Configuration
-# WorldBench: Physics-verifiable scenarios for 3D world model evaluation
+# World Reward: Physics-verifiable scenarios for 3D world model evaluation
 
 domain_id: public_safety
 domain_name: Public Safety & Infrastructure
