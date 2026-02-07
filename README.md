@@ -77,7 +77,7 @@ flowchart TB
         GENIE --> BROWSER --> RL
     end
 
-    REPORT -.->|"reward signal\nfeeds into"| FUTURE
+    REPORT -.->|"reward signal feeds into"| FUTURE
 
     style GENERATE fill:#1a73e8,color:#fff
     style RENDER fill:#34a853,color:#fff
