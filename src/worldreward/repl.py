@@ -227,12 +227,17 @@ def run_repl() -> None:
     """Launch the interactive REPL with step-by-step wizards."""
     print(BANNER)
 
-    session: PromptSession = PromptSession(history=InMemoryHistory())
+    session: PromptSession = PromptSession(
+        history=InMemoryHistory(),
+        bottom_toolbar=HTML(
+            "<ansigray>  /help · /generate → /videos → /verify · /quit</ansigray>"
+        ),
+    )
 
     while True:
         try:
             user_input = session.prompt(
-                HTML("<b><ansigreen>worldreward</ansigreen></b><b> ❯ </b>"),
+                HTML("\n<b><ansigreen>worldreward</ansigreen></b><b> ❯ </b>"),
             ).strip()
         except (KeyboardInterrupt, EOFError):
             print("\n👋 Goodbye!")

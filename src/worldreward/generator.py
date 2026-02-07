@@ -11,6 +11,7 @@ from worldreward.exceptions import DatasetGenerationError
 from worldreward.gemini_client import GeminiClient
 from worldreward.models import Confidence, DomainConfig, Scenario
 from worldreward.prompt_builder import build_generation_prompt
+from worldreward.spinner import Spinner
 
 
 class ScenarioGenerator:
@@ -50,7 +51,8 @@ class ScenarioGenerator:
         print(f"🤖 Calling Gemini API...")
 
         try:
-            raw_scenarios = self._client.generate_scenarios_json(prompt)
+            with Spinner("Generating scenarios with Gemini"):
+                raw_scenarios = self._client.generate_scenarios_json(prompt)
         except Exception as e:
             raise DatasetGenerationError(config.domain_id, str(e)) from e
 

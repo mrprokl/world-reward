@@ -12,6 +12,7 @@ from google import genai
 from worldreward.dataset_writer import load_scenarios_csv
 from worldreward.exceptions import GeminiAPIError, VerificationError
 from worldreward.models import RewardScore, VerificationResult
+from worldreward.spinner import Spinner
 
 
 class Verifier:
@@ -103,12 +104,14 @@ class Verifier:
         prompt = _build_verification_prompt(scenario["verification_question"])
 
         try:
-            video_file = self._client.files.upload(file=str(video_path))
+            with Spinner("Uploading video"):
+                video_file = self._client.files.upload(file=str(video_path))
 
             # Wait for file to become ACTIVE (processing takes a few seconds)
-            while video_file.state.name == "PROCESSING":
-                time.sleep(2)
-                video_file = self._client.files.get(name=video_file.name)
+            with Spinner("Processing video"):
+                while video_file.state.name == "PROCESSING":
+                    time.sleep(2)
+                    video_file = self._client.files.get(name=video_file.name)
 
             if video_file.state.name != "ACTIVE":
                 raise VerificationError(
@@ -116,30 +119,31 @@ class Verifier:
                     f"File upload failed — state: {video_file.state.name}",
                 )
 
-            response = self._client.models.generate_content(
-                model=self._model,
-                contents=[
-                    video_file,
-                    prompt,
-                ],
-                config=genai.types.GenerateContentConfig(
-                    temperature=0.1,
-                    response_mime_type="application/json",
-                    response_schema={
-                        "type": "object",
-                        "properties": {
-                            "answer": {
-                                "type": "string",
-                                "enum": ["yes", "no", "undetermined"],
+            with Spinner("Analyzing with Gemini"):
+                response = self._client.models.generate_content(
+                    model=self._model,
+                    contents=[
+                        video_file,
+                        prompt,
+                    ],
+                    config=genai.types.GenerateContentConfig(
+                        temperature=0.1,
+                        response_mime_type="application/json",
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "answer": {
+                                    "type": "string",
+                                    "enum": ["yes", "no", "undetermined"],
+                                },
+                                "reasoning": {
+                                    "type": "string",
+                                },
                             },
-                            "reasoning": {
-                                "type": "string",
-                            },
+                            "required": ["answer", "reasoning"],
                         },
-                        "required": ["answer", "reasoning"],
-                    },
-                ),
-            )
+                    ),
+                )
             vlm_answer, vlm_reasoning = _parse_verification_response(response.text)
         except VerificationError:
             raise

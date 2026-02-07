@@ -17,6 +17,7 @@
 - **Gemini 3 Pro** (Google DeepMind) — Scenario generation + video verification
 - **Veo 3.1** — Video rendering (text-to-video, proxy for world models)
 - **Python** — Clean OOP, type hints, dataclasses
+- **prompt_toolkit** — Interactive REPL with wizards
 
 ## Quick Start
 
@@ -32,10 +33,51 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 
-# 4. Generate → Render → Verify (full pipeline)
+# 4. Launch interactive mode
+PYTHONPATH=src python3 main.py
+```
+
+## Usage Modes
+
+### Interactive REPL (recommended)
+
+Launch with no arguments to enter the interactive REPL with step-by-step wizards:
+
+```bash
+PYTHONPATH=src python3 main.py
+```
+
+The REPL provides:
+- **`/generate`** — Guided wizard: select domain → count → model
+- **`/videos`** — Pick a dataset from the list, videos are generated in parallel
+- **`/verify`** — Pick a dataset with videos, verification runs automatically
+- **`/domains`** — List available domain configurations
+- **`/help`** — Show all commands
+
+Features:
+- Animated spinner during API calls (Gemini generation, video upload, VLM analysis)
+- Bottom toolbar with pipeline reminder
+- Command history (↑/↓ arrows)
+
+### Direct CLI
+
+For scripting or CI, use subcommands directly:
+
+```bash
+# List available domains
+PYTHONPATH=src python3 main.py list-domains
+
+# Step 1: Generate scenario dataset
 PYTHONPATH=src python3 main.py generate --domain autonomous_driving --count 5
+
+# Step 2: Render videos from dataset
 PYTHONPATH=src python3 main.py videos --dataset output/datasets/autonomous_driving_XXXX.csv
+
+# Step 3: Verify videos against physics ground truth
 PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_driving_XXXX.csv
+
+# Override Gemini model for generation
+PYTHONPATH=src python3 main.py generate --domain public_safety --count 10 --model gemini-2.5-flash
 ```
 
 ## Pipeline
@@ -86,6 +128,8 @@ flowchart TB
     style FUTURE fill:#9334e6,color:#fff
 ```
 
+## Output Structure
+
 Each run is linked by a shared run ID (`{domain}_{timestamp}`):
 
 ```
@@ -93,25 +137,6 @@ output/
 ├── datasets/   autonomous_driving_20260207_131855.csv
 ├── videos/     autonomous_driving_20260207_131855/AD-001.mp4, AD-002.mp4, ...
 └── results/    results_autonomous_driving_20260207_131855.csv
-```
-
-## CLI Commands
-
-```bash
-# List available domains
-PYTHONPATH=src python3 main.py list-domains
-
-# Step 1: Generate scenario dataset
-PYTHONPATH=src python3 main.py generate --domain autonomous_driving --count 20
-
-# Step 2: Render videos from dataset
-PYTHONPATH=src python3 main.py videos --dataset output/datasets/autonomous_driving_XXXX.csv
-
-# Step 3: Verify videos against physics ground truth
-PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_driving_XXXX.csv
-
-# Override Gemini model for generation
-PYTHONPATH=src python3 main.py generate --domain public_safety --count 10 --model gemini-2.5-flash
 ```
 
 ## Dataset Format
@@ -155,7 +180,7 @@ categories:
       - "Example scenario description"
 ```
 
-Then run:
+Then use `/generate` in the REPL or:
 ```bash
 PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 ```
@@ -163,10 +188,14 @@ PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 ## Architecture
 
 ```
+├── main.py                     # Thin entrypoint — CLI/REPL dispatch
 ├── src/worldreward/
+│   ├── cli.py              # Shared pipeline commands + argparse
+│   ├── repl.py             # Interactive REPL with wizards + bottom toolbar
+│   ├── spinner.py          # Animated terminal spinner for API calls
 │   ├── models.py           # Scenario, VerificationResult, RewardScore dataclasses
 │   ├── config_loader.py    # YAML config loading & validation
-│   ├── prompt_builder.py   # Structured prompt construction (dataset + video prompts)
+│   ├── prompt_builder.py   # Structured prompt construction (dataset + video)
 │   ├── gemini_client.py    # Gemini API wrapper
 │   ├── generator.py        # Dataset generation orchestrator
 │   ├── video_generator.py  # Veo 3.1 parallel video rendering
@@ -181,17 +210,17 @@ PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
 │   ├── datasets/           # Generated scenario CSV files
 │   ├── videos/             # Rendered videos grouped by run ID
 │   └── results/            # Verification results CSV files
-└── main.py                 # CLI entrypoint
+└── requirements.txt        # google-genai, pyyaml, python-dotenv, prompt_toolkit
 ```
 
 ## The Vision
 
 World Reward is the evaluation and reward layer for 3D world models:
 
-1. **Generate** scenarios with physically predictable outcomes ← `generate`
-2. **Render** through a video/world model (Veo 3.1 now, Genie 3 next) ← `videos`
-3. **Verify** whether the output respects known physical laws ← `verify`
-4. **Score** with ternary verifiable rewards (+1 / 0 / -1) ← `verify`
+1. **Generate** scenarios with physically predictable outcomes ← `/generate`
+2. **Render** through a video/world model (Veo 3.1 now, Genie 3 next) ← `/videos`
+3. **Verify** whether the output respects known physical laws ← `/verify`
+4. **Score** with ternary verifiable rewards (+1 / 0 / -1)
 5. **Optimize** the world model via RL (GRPO, PPO, etc.) using the accumulated reward signal ← *next step*
 
 ### Scaling path
@@ -209,9 +238,10 @@ This is the same paradigm as verifiable rewards for LLM reasoning (math, code), 
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| **Video-based POC** | ✅ Current | Veo 3.1 as proxy world model, Gemini 3 Pro as VLM verifier |
+| **Video-based POC** | ✅ Done | Veo 3.1 as proxy world model, Gemini 3 Pro as VLM verifier |
+| **Interactive REPL** | ✅ Done | Step-by-step wizards, animated spinners, command history |
 | **Genie 3 integration** | 🔜 Next | Generate N 3D environments per prompt, evaluate each independently |
-| **Browser-use verification** | 🔮 Future | Agentic browser-use to navigate 3D environments, perform actions, and verify physics from multiple viewpoints — scaling the reward signal at scale |
+| **Browser-use verification** | 🔮 Future | Agentic browser-use to navigate 3D environments and verify physics from multiple viewpoints |
 | **RL training loop** | 🔮 Future | Feed accumulated rewards into GRPO/PPO to improve the world model's physical reasoning |
 
 ---
