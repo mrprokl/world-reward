@@ -86,6 +86,11 @@ def cmd_generate(args: argparse.Namespace) -> None:
     print("=" * 60)
 
 
+def _extract_run_id(dataset_path: Path) -> str:
+    """Extract run ID from dataset filename (e.g. 'autonomous_driving_20260207_131855')."""
+    return dataset_path.stem
+
+
 def cmd_videos(args: argparse.Namespace) -> None:
     """Generate videos from a dataset using Veo 3.1."""
     dataset_path = Path(args.dataset)
@@ -93,26 +98,32 @@ def cmd_videos(args: argparse.Namespace) -> None:
         print(f"Error: Dataset not found: {dataset_path}")
         sys.exit(1)
 
+    run_id = _extract_run_id(dataset_path)
+    videos_out = VIDEOS_DIR / run_id
+
     print("=" * 60)
     print("  World Reward — Video Generator (Veo 3.1)")
     print("=" * 60)
 
     generator = VideoGenerator()
-    generator.generate_from_dataset(dataset_path, VIDEOS_DIR)
+    generator.generate_from_dataset(dataset_path, videos_out)
 
     print("=" * 60)
-    print(f"  Done! Videos saved to: {VIDEOS_DIR}")
+    print(f"  Done! Videos saved to: {videos_out}")
     print("=" * 60)
 
 
 def cmd_verify(args: argparse.Namespace) -> None:
     """Verify generated videos against physics ground truth."""
     dataset_path = Path(args.dataset)
-    videos_dir = Path(args.videos_dir) if args.videos_dir else VIDEOS_DIR
 
     if not dataset_path.exists():
         print(f"Error: Dataset not found: {dataset_path}")
         sys.exit(1)
+
+    run_id = _extract_run_id(dataset_path)
+    videos_dir = Path(args.videos_dir) if args.videos_dir else VIDEOS_DIR / run_id
+
     if not videos_dir.exists():
         print(f"Error: Videos directory not found: {videos_dir}")
         sys.exit(1)
@@ -125,8 +136,7 @@ def cmd_verify(args: argparse.Namespace) -> None:
     results = verifier.verify_dataset(dataset_path, videos_dir)
 
     if results:
-        timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
-        results_path = RESULTS_DIR / f"results_{timestamp}.csv"
+        results_path = RESULTS_DIR / f"results_{run_id}.csv"
         write_results(results, results_path)
         print(f"\n💾 Results saved to: {results_path}")
 
