@@ -1,6 +1,10 @@
-# World Reward
+<h1 align="center">World Reward</h1>
 
-### Experimentation towards scalable evaluation environments for 3D World Models with verifiable rewards.
+<p align="center">
+  <img src="assets/worldreward.png" alt="World Reward" width="600" />
+</p>
+
+<h3 align="center">Experimentation towards scalable evaluation environments for 3D World Models with verifiable rewards.</h3>
 
 ---
 
