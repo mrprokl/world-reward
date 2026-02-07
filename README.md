@@ -40,9 +40,50 @@ PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_drivi
 
 ## Pipeline
 
-```
-YAML Config → [Gemini 3 Pro] → datasets/ → [Veo 3.1] → videos/ → [Gemini 3 Pro] → results/
-               (generate)                   (render)               (verify + score)
+```mermaid
+flowchart TB
+    subgraph GENERATE["① GENERATE — Gemini 3 Pro"]
+        YAML["YAML Domain Config\n(categories, physics rules)"]
+        PROMPT["Prompt Builder\n(scenario + video prompt)"]
+        GEMINI_GEN["Gemini 3 Pro\n(structured JSON output)"]
+        DATASET["scenarios.csv\n(world_prompt, action, video_prompt,\nverification_question, expected_answer)"]
+        YAML --> PROMPT --> GEMINI_GEN --> DATASET
+    end
+
+    subgraph RENDER["② RENDER — World Model"]
+        VEO["Veo 3.1 — text-to-video\n(parallel generation)"]
+        VIDEOS["videos/{scenario_id}.mp4"]
+        DATASET --> VEO --> VIDEOS
+    end
+
+    subgraph VERIFY["③ VERIFY — Gemini 3 Pro (VLM Judge)"]
+        UPLOAD["Upload video to Gemini"]
+        VLM["Gemini 3 Pro\nwatches video + answers\nverification_question"]
+        COMPARE["Compare VLM answer\nvs expected_answer"]
+        VIDEOS --> UPLOAD --> VLM --> COMPARE
+    end
+
+    subgraph SCORE["④ SCORE — Reward Signal"]
+        REWARD["+1 correct | 0 undetermined | -1 incorrect"]
+        REPORT["Per-category & overall\naccuracy + reward report"]
+        COMPARE --> REWARD --> REPORT
+    end
+
+    subgraph FUTURE["⑤ FUTURE — Scale & Optimize"]
+        direction LR
+        GENIE["Genie 3\n4× 3D environments\nper prompt"]
+        BROWSER["Browser-Use Agent\nnavigate + inspect\nmultiple viewpoints"]
+        RL["GRPO / RL training\nusing accumulated\nreward signal"]
+        GENIE --> BROWSER --> RL
+    end
+
+    REPORT -.->|"reward signal\nfeeds into"| FUTURE
+
+    style GENERATE fill:#1a73e8,color:#fff
+    style RENDER fill:#34a853,color:#fff
+    style VERIFY fill:#ea4335,color:#fff
+    style SCORE fill:#fbbc04,color:#000
+    style FUTURE fill:#9334e6,color:#fff
 ```
 
 Each run is linked by a shared run ID (`{domain}_{timestamp}`):
@@ -151,15 +192,27 @@ World Reward is the evaluation and reward layer for 3D world models:
 2. **Render** through a video/world model (Veo 3.1 now, Genie 3 next) ← `videos`
 3. **Verify** whether the output respects known physical laws ← `verify`
 4. **Score** with ternary verifiable rewards (+1 / 0 / -1) ← `verify`
-5. **Optimize** the world model via RLVR using the accumulated reward signal ← *next step*
+5. **Optimize** the world model via RL (GRPO, PPO, etc.) using the accumulated reward signal ← *next step*
+
+### Scaling path
+
+The real power unlocks when combining **Genie 3** + **browser-use agents**:
+
+- **Genie 3** generates N interactive 3D environments for the same prompt (e.g., 4 variants of "car hits guardrail at 300 km/h")
+- **Browser-use agents** autonomously navigate each environment, perform the action, observe the outcome from multiple viewpoints
+- **World Reward** scores each environment with verified physics rewards
+- The reward signal feeds directly into **GRPO** or other RL methods to train the world model — closing the loop
+
+This is the same paradigm as verifiable rewards for LLM reasoning (math, code), applied to **physical reasoning in 3D world models**.
 
 ### Roadmap
 
 | Phase | Status | Description |
 |-------|--------|-------------|
 | **Video-based POC** | ✅ Current | Veo 3.1 as proxy world model, Gemini 3 Pro as VLM verifier |
-| **Genie 3 integration** | 🔜 Next | Direct 3D environment rendering via Genie 3 API |
-| **Browser-use verification** | 🔮 Future | Agentic browser-use to navigate 3D environments and verify physics from multiple viewpoints — scaling the reward signal beyond passive video analysis |
+| **Genie 3 integration** | 🔜 Next | Generate N 3D environments per prompt, evaluate each independently |
+| **Browser-use verification** | 🔮 Future | Agentic browser-use to navigate 3D environments, perform actions, and verify physics from multiple viewpoints — scaling the reward signal at scale |
+| **RL training loop** | 🔮 Future | Feed accumulated rewards into GRPO/PPO to improve the world model's physical reasoning |
 
 ---
 
