@@ -1,0 +1,16 @@
+# Context
+context_genie3.md
+veo3_doc.md
+gemini3_doc.md
+context_hackathon.md
+context_waymo.md
+idea_brief.md
+prd.md
+python_quality_guidelines.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
+output/
