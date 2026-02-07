@@ -43,37 +43,37 @@ PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_drivi
 ```mermaid
 flowchart TB
     subgraph GENERATE["① GENERATE — Gemini 3 Pro"]
-        YAML["YAML Domain Config\n(categories, physics rules)"]
-        PROMPT["Prompt Builder\n(scenario + video prompt)"]
-        GEMINI_GEN["Gemini 3 Pro\n(structured JSON output)"]
-        DATASET["scenarios.csv\n(world_prompt, action, video_prompt,\nverification_question, expected_answer)"]
+        YAML["YAML Domain Config"]
+        PROMPT["Prompt Builder"]
+        GEMINI_GEN["Gemini 3 Pro"]
+        DATASET["scenarios.csv"]
         YAML --> PROMPT --> GEMINI_GEN --> DATASET
     end
 
     subgraph RENDER["② RENDER — World Model"]
-        VEO["Veo 3.1 — text-to-video\n(parallel generation)"]
+        VEO["Veo 3.1 (parallel generation)"]
         VIDEOS["videos/{scenario_id}.mp4"]
         DATASET --> VEO --> VIDEOS
     end
 
     subgraph VERIFY["③ VERIFY — Gemini 3 Pro (VLM Judge)"]
-        UPLOAD["Upload video to Gemini"]
-        VLM["Gemini 3 Pro\nwatches video + answers\nverification_question"]
-        COMPARE["Compare VLM answer\nvs expected_answer"]
+        UPLOAD["Upload video"]
+        VLM["Gemini 3 Pro watches video"]
+        COMPARE["Compare VLM answer vs ground truth"]
         VIDEOS --> UPLOAD --> VLM --> COMPARE
     end
 
     subgraph SCORE["④ SCORE — Reward Signal"]
         REWARD["+1 correct | 0 undetermined | -1 incorrect"]
-        REPORT["Per-category & overall\naccuracy + reward report"]
+        REPORT["Per-category accuracy + reward report"]
         COMPARE --> REWARD --> REPORT
     end
 
-    subgraph FUTURE["⑤ FUTURE — Scale & Optimize"]
+    subgraph FUTURE["⑤ FUTURE"]
         direction LR
-        GENIE["Genie 3\n4× 3D environments\nper prompt"]
-        BROWSER["Browser-Use Agent\nnavigate + inspect\nmultiple viewpoints"]
-        RL["GRPO / RL training\nusing accumulated\nreward signal"]
+        GENIE["Genie 3: N 3D environments per prompt"]
+        BROWSER["Browser-Use Agent: navigate, inspect, verify"]
+        RL["GRPO / RL: train world model with reward signal"]
         GENIE --> BROWSER --> RL
     end
 
