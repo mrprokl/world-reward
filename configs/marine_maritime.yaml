@@ -1,0 +1,70 @@
+# Marine & Maritime Physics — Domain Configuration
+# World Reward: Physics-verifiable scenarios for 3D world model evaluation
+
+domain_id: marine_maritime
+domain_name: Marine & Maritime Physics
+description: >
+  Scenarios testing physical coherence in marine and maritime contexts.
+  Covers buoyancy, hydrodynamics, wave interactions, vessel collisions,
+  cargo loading physics, and weather effects at sea.
+
+context_prompt: >
+  You are generating physically verifiable test scenarios for evaluating
+  3D world models in marine and maritime contexts. Each scenario must describe
+  a realistic sea, ocean, or waterway scene, an action or event, and a yes/no
+  question whose answer is physically unambiguous based on known laws of physics
+  (buoyancy, fluid dynamics, Archimedes' principle, wave mechanics).
+  Focus on scenarios where the expected physical outcome is binary and indisputable.
+
+id_prefix: MM
+
+categories:
+  - name: buoyancy_and_displacement
+    description: >
+      Objects sinking or floating based on density and Archimedes' principle.
+      Tests whether the world model correctly simulates buoyancy, waterline
+      displacement, and density-based outcomes.
+    example_scenarios:
+      - "Solid steel cube dropped into ocean — sinks to the bottom"
+      - "Empty sealed wooden barrel pushed underwater and released — rises back to surface"
+      - "Overloaded small boat taking on water — eventually sinks below waterline"
+
+  - name: wave_and_current_forces
+    description: >
+      Effects of waves, tides, and currents on vessels and floating objects.
+      Tests whether the world model correctly simulates hydrodynamic forces,
+      drift, and wave-object interactions.
+    example_scenarios:
+      - "Small rowboat hit by large ocean wave broadside — capsizes"
+      - "Floating debris carried by strong river current toward bridge pylon — collides with pylon"
+      - "Anchored buoy in heavy swell — bobs up and down but stays in place"
+
+  - name: vessel_collision_and_damage
+    description: >
+      Collisions between vessels and obstacles such as rocks, icebergs,
+      or other ships. Tests correct simulation of impact damage, hull
+      breach, and structural deformation.
+    example_scenarios:
+      - "Cargo ship striking an iceberg at cruising speed — hull breach, water ingress"
+      - "Two motorboats colliding head-on at high speed — fiberglass hulls shatter on impact"
+      - "Sailboat running aground on rocky reef — hull torn open at the bottom"
+
+  - name: cargo_and_loading_physics
+    description: >
+      Effects of cargo distribution, overloading, and shifting weight
+      on vessel stability. Tests correct simulation of center of gravity,
+      listing, and capsizing.
+    example_scenarios:
+      - "Container ship with all cargo stacked on one side — vessel lists heavily to that side"
+      - "Fishing boat loaded far beyond capacity — gunwale dips below waterline, takes on water"
+      - "Cargo shifting suddenly during sharp turn — vessel rolls dangerously"
+
+  - name: weather_at_sea
+    description: >
+      Effects of storms, wind, ice, and extreme weather on maritime
+      vessels and structures. Tests correct simulation of wind forces,
+      ice accumulation, and storm surge.
+    example_scenarios:
+      - "Sailboat caught in hurricane-force winds — mast snaps under wind load"
+      - "Ice accumulating on fishing trawler superstructure — vessel becomes top-heavy, stability compromised"
+      - "Lightning striking metal mast of a yacht — electrical discharge through the mast, no fire on metal"
