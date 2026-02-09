@@ -17,7 +17,6 @@ from worldreward.dataset_writer import load_scenarios_csv
 from worldreward.exceptions import GeminiAPIError, VideoGenerationError
 from worldreward.paths import resolve_api_key
 
-
 NEGATIVE_PROMPT = "cartoon, drawing, animation, low quality, blurry, watermark, text overlay"
 
 

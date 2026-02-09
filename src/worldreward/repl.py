@@ -21,7 +21,6 @@ from worldreward.cli import (
 from worldreward.config_loader import list_available_domains
 from worldreward.paths import resolve_api_key, save_api_key
 
-
 # ─── Banner & help ───────────────────────────────────────────────────
 
 BANNER = """

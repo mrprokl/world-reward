@@ -8,7 +8,6 @@ from pathlib import Path
 
 from worldreward.models import RewardScore, VerificationResult
 
-
 RESULT_FIELDNAMES = [
     "scenario_id",
     "category",
@@ -98,7 +97,7 @@ def _print_overall_score(results: list[VerificationResult]) -> None:
     accuracy = (correct / evaluable * 100) if evaluable > 0 else 0.0
 
     print(f"\n  {'─' * 50}")
-    print(f"  📊 OVERALL")
+    print("  📊 OVERALL")
     print(f"     Total scenarios: {total}")
     print(f"     ✅ Correct:      {correct}")
     print(f"     ❌ Incorrect:    {incorrect}")

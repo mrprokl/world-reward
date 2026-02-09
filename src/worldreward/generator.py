@@ -48,7 +48,7 @@ class ScenarioGenerator:
 
         print(f"🔧 Domain: {config.domain_name}")
         print(f"📊 Requesting {count} scenarios across {len(config.categories)} categories...")
-        print(f"🤖 Calling Gemini API...")
+        print("🤖 Calling Gemini API...")
 
         try:
             with Spinner("Generating scenarios with Gemini"):
