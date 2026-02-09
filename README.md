@@ -25,6 +25,8 @@
 
 ## Quick Start
 
+Prerequisite: Python 3.11+
+
 ```bash
 # 1. Create and activate virtual environment
 python3 -m venv .venv

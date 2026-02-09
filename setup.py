@@ -5,6 +5,7 @@ setup(
     name="worldreward",
     version="0.1.0",
     description="Physics-verifiable evaluation pipeline for video/3D world models.",
+    python_requires=">=3.11",
     package_dir={"": "src"},
     packages=find_packages("src"),
     include_package_data=True,
