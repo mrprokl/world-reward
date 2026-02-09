@@ -1,0 +1,67 @@
+# Autonomous Driving Safety — Domain Configuration
+# World Reward: Physics-verifiable scenarios for 3D world model evaluation
+
+domain_id: autonomous_driving
+domain_name: Autonomous Driving Safety
+description: >
+  Scenarios testing physical coherence in autonomous driving contexts.
+  Covers collisions, vehicle dynamics, weather effects on driving,
+  and road infrastructure interactions.
+
+context_prompt: >
+  You are generating physically verifiable test scenarios for evaluating
+  3D world models in autonomous driving contexts. Each scenario must describe
+  a realistic driving scene, an action or event, and a yes/no question whose
+  answer is physically unambiguous based on known laws of physics.
+  Focus on scenarios where the expected physical outcome is binary and indisputable.
+
+id_prefix: AD
+
+categories:
+  - name: vehicle_collision
+    description: >
+      Rigid body collisions between vehicles and obstacles.
+      Tests whether the world model correctly simulates deformation,
+      momentum transfer, and structural damage.
+    example_scenarios:
+      - "Supercar hitting a concrete barrier at 200 km/h — major deformation expected"
+      - "Low-speed parking lot fender bender at 5 km/h — minor dent, no structural damage"
+      - "Truck rear-ending a sedan at highway speed — sedan crushed from behind"
+
+  - name: weather_physics
+    description: >
+      Effects of weather on driving surfaces and visibility.
+      Tests whether the world model correctly renders ice, rain, fog,
+      and their physical consequences on vehicle behavior.
+    example_scenarios:
+      - "Car braking on black ice — extended stopping distance, potential skid"
+      - "Heavy rain on highway — reduced visibility, spray from tires"
+      - "Dense fog — headlights scatter, visibility under 50 meters"
+
+  - name: object_road_interaction
+    description: >
+      Interactions between vehicles and objects on the road.
+      Tests correct physics for debris, fallen objects, tire blowouts,
+      and road surface changes.
+    example_scenarios:
+      - "Tire blowout at 120 km/h — vehicle pulls to one side"
+      - "Car driving over large pothole — suspension compression, possible damage"
+      - "Motorcycle hitting oil spill on curve — loss of traction"
+
+  - name: pedestrian_vehicle_dynamics
+    description: >
+      Physical outcomes of vehicle-pedestrian interactions and
+      pedestrian movement physics. Tests realistic human body dynamics.
+    example_scenarios:
+      - "Pedestrian hit by car at 60 km/h — pedestrian thrown, not standing"
+      - "Cyclist falling on wet road — sliding on wet surface"
+      - "Person jumping from moving vehicle — rolling, injuries expected"
+
+  - name: traffic_infrastructure
+    description: >
+      Interactions with traffic infrastructure like guardrails, signs,
+      bollards, and traffic lights. Tests structural response to impact.
+    example_scenarios:
+      - "Car hitting metal guardrail at 300 km/h — guardrail deforms, car damaged"
+      - "Truck hitting low bridge — roof sheared off"
+      - "Vehicle crashing into concrete bollard — vehicle stops abruptly, front crushed"

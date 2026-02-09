@@ -30,15 +30,18 @@
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 2. Install dependencies
-pip install -r requirements.txt
+# 2. Install package (editable mode for development)
+pip install -e .
 
 # 3. Set up your API key
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 
+# Optional: skip .env and configure on first REPL launch
+# worldreward will prompt for the key and store it in ~/.worldreward/config.toml
+
 # 4. Launch interactive mode
-PYTHONPATH=src python3 main.py
+worldreward
 ```
 
 ## Usage Modes
@@ -48,7 +51,7 @@ PYTHONPATH=src python3 main.py
 Launch with no arguments to enter the interactive REPL with step-by-step wizards:
 
 ```bash
-PYTHONPATH=src python3 main.py
+worldreward
 ```
 
 The REPL provides:
@@ -62,6 +65,7 @@ Features:
 - Animated spinner during API calls (Gemini generation, video upload, VLM analysis)
 - Bottom toolbar with pipeline reminder
 - Command history (↑/↓ arrows)
+- First-run API key bootstrap if `GEMINI_API_KEY` is not set (stored in `~/.worldreward/config.toml`)
 
 ### Direct CLI
 
@@ -69,20 +73,24 @@ For scripting or CI, use subcommands directly:
 
 ```bash
 # List available domains
-PYTHONPATH=src python3 main.py list-domains
+worldreward list-domains
 
 # Step 1: Generate scenario dataset
-PYTHONPATH=src python3 main.py generate --domain autonomous_driving --count 5
+worldreward generate --domain autonomous_driving --count 5
 
 # Step 2: Render videos from dataset
-PYTHONPATH=src python3 main.py videos --dataset output/datasets/autonomous_driving_XXXX.csv
+worldreward videos --dataset output/datasets/autonomous_driving_XXXX.csv
 
 # Step 3: Verify videos against physics ground truth
-PYTHONPATH=src python3 main.py verify --dataset output/datasets/autonomous_driving_XXXX.csv
+worldreward verify --dataset output/datasets/autonomous_driving_XXXX.csv
 
 # Override Gemini model for generation
-PYTHONPATH=src python3 main.py generate --domain public_safety --count 10 --model gemini-2.5-flash
+worldreward generate --domain public_safety --count 10 --model gemini-2.5-flash
 ```
+
+API key resolution order:
+1. `GEMINI_API_KEY` environment variable (`.env` supported)
+2. `~/.worldreward/config.toml` (written by REPL bootstrap)
 
 ## Pipeline
 
@@ -186,7 +194,7 @@ categories:
 
 Then use `/generate` in the REPL or:
 ```bash
-PYTHONPATH=src python3 main.py generate --domain my_domain --count 10
+worldreward generate --domain my_domain --count 10
 ```
 
 ## Architecture

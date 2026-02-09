@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 import yaml
@@ -31,6 +32,9 @@ def load_domain_config(config_path: Path) -> DomainConfig:
     except yaml.YAMLError as e:
         raise ConfigLoadError(str(config_path), f"Invalid YAML: {e}") from e
 
+    if not isinstance(raw, dict):
+        raise ConfigLoadError(str(config_path), "YAML root must be a mapping/object")
+
     _validate_required_fields(raw, config_path)
 
     categories = [
@@ -52,18 +56,26 @@ def load_domain_config(config_path: Path) -> DomainConfig:
     )
 
 
-def list_available_domains(configs_dir: Path) -> list[str]:
-    """List available domain config files (without extension).
+def list_available_domains(configs_dir: Path | Iterable[Path]) -> list[str]:
+    """List available domain config files (without extension)."""
+    paths = [configs_dir] if isinstance(configs_dir, Path) else list(configs_dir)
+    domain_names: set[str] = set()
+    for directory in paths:
+        if not directory.exists():
+            continue
+        for file_path in directory.glob("*.yaml"):
+            domain_names.add(file_path.stem)
+    return sorted(domain_names)
 
-    Args:
-        configs_dir: Directory containing YAML config files.
 
-    Returns:
-        List of domain names (file stems).
-    """
-    if not configs_dir.exists():
-        return []
-    return [f.stem for f in configs_dir.glob("*.yaml")]
+def resolve_domain_config_path(domain: str, configs_dir: Path | Iterable[Path]) -> Path | None:
+    """Resolve the YAML file path for a given domain name."""
+    paths = [configs_dir] if isinstance(configs_dir, Path) else list(configs_dir)
+    for directory in paths:
+        config_path = directory / f"{domain}.yaml"
+        if config_path.exists():
+            return config_path
+    return None
 
 
 _REQUIRED_FIELDS = ["domain_id", "domain_name", "description", "context_prompt", "categories", "id_prefix"]

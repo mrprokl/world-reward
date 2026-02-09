@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from google import genai
 from worldreward.dataset_writer import load_scenarios_csv
 from worldreward.exceptions import GeminiAPIError, VerificationError
 from worldreward.models import RewardScore, VerificationResult
+from worldreward.paths import resolve_api_key
 from worldreward.spinner import Spinner
 
 
@@ -40,9 +40,11 @@ class Verifier:
         Raises:
             GeminiAPIError: If no API key is provided or found in environment.
         """
-        resolved_key = api_key or os.getenv("GEMINI_API_KEY")
+        resolved_key = resolve_api_key(api_key)
         if not resolved_key:
-            raise GeminiAPIError("No API key provided. Set GEMINI_API_KEY in .env or pass api_key.")
+            raise GeminiAPIError(
+                "No API key provided. Set GEMINI_API_KEY, use ~/.worldreward/config.toml, or pass api_key."
+            )
         self._client = genai.Client(api_key=resolved_key)
         self._model = model or self.DEFAULT_MODEL
 

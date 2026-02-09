@@ -6,7 +6,6 @@ then polled together until completion.
 
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +15,7 @@ from google.genai import types
 
 from worldreward.dataset_writer import load_scenarios_csv
 from worldreward.exceptions import GeminiAPIError, VideoGenerationError
+from worldreward.paths import resolve_api_key
 
 
 NEGATIVE_PROMPT = "cartoon, drawing, animation, low quality, blurry, watermark, text overlay"
@@ -53,9 +53,11 @@ class VideoGenerator:
         Raises:
             GeminiAPIError: If no API key is provided or found in environment.
         """
-        resolved_key = api_key or os.getenv("GEMINI_API_KEY")
+        resolved_key = resolve_api_key(api_key)
         if not resolved_key:
-            raise GeminiAPIError("No API key provided. Set GEMINI_API_KEY in .env or pass api_key.")
+            raise GeminiAPIError(
+                "No API key provided. Set GEMINI_API_KEY, use ~/.worldreward/config.toml, or pass api_key."
+            )
         self._client = genai.Client(api_key=resolved_key)
         self._model = model or self.DEFAULT_MODEL
 

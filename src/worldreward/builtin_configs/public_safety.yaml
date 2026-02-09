@@ -1,0 +1,67 @@
+# Public Safety & Infrastructure — Domain Configuration
+# World Reward: Physics-verifiable scenarios for 3D world model evaluation
+
+domain_id: public_safety
+domain_name: Public Safety & Infrastructure
+description: >
+  Scenarios testing physical coherence in public safety and urban
+  infrastructure contexts. Covers structural failures, natural disasters,
+  fire dynamics, and material behavior under stress.
+
+context_prompt: >
+  You are generating physically verifiable test scenarios for evaluating
+  3D world models in public safety and urban infrastructure contexts.
+  Each scenario must describe a realistic urban or natural scene, an action
+  or event, and a yes/no question whose answer is physically unambiguous
+  based on known laws of physics. Focus on scenarios relevant to emergency
+  response, structural safety, and natural disaster simulation.
+
+id_prefix: PS
+
+categories:
+  - name: structural_failure
+    description: >
+      Building and infrastructure collapse, material fatigue,
+      and structural load limits. Tests whether the world model
+      correctly simulates structural integrity and failure modes.
+    example_scenarios:
+      - "Overloaded bridge beyond capacity — visible deformation and collapse"
+      - "Earthquake shaking unreinforced masonry building — walls crack and crumble"
+      - "Crane dropping heavy load on glass roof — roof shatters"
+
+  - name: fire_dynamics
+    description: >
+      Fire spread, smoke behavior, and thermal effects on materials.
+      Tests whether the world model correctly simulates combustion,
+      heat transfer, and material response to fire.
+    example_scenarios:
+      - "Wooden building on fire — fire spreads upward, smoke rises"
+      - "Gas explosion in enclosed space — blast wave, windows blown out"
+      - "Metal beam exposed to intense fire — beam sags and deforms"
+
+  - name: water_and_flooding
+    description: >
+      Flood dynamics, water flow, buoyancy, and water damage.
+      Tests correct fluid simulation in urban environments.
+    example_scenarios:
+      - "Flash flood in narrow street — cars swept away by current"
+      - "Rising water level around wooden fence — fence eventually gives way"
+      - "Heavy object dropped in deep water — sinks to bottom"
+
+  - name: gravity_and_falling
+    description: >
+      Objects and structures falling under gravity. Tests correct
+      simulation of freefall, impact, and resulting damage.
+    example_scenarios:
+      - "Construction debris falling from 10th floor — accelerates, smashes on impact"
+      - "Person falling from height onto concrete — does not walk away uninjured"
+      - "Tree falling on parked car — roof crushed, windshield shattered"
+
+  - name: material_behavior
+    description: >
+      How materials respond to force, temperature, and environmental
+      conditions. Tests glass shattering, metal bending, ice melting, etc.
+    example_scenarios:
+      - "Glass window hit by rock — glass shatters"
+      - "Ice sculpture in direct sunlight at 35°C — melts over time"
+      - "Rubber tire run over by heavy machinery — deforms but does not shatter"

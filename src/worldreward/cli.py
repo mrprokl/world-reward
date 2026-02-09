@@ -5,9 +5,18 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from worldreward.config_loader import list_available_domains
+from worldreward.config_loader import list_available_domains, resolve_domain_config_path
+from worldreward.exceptions import WorldRewardError
 from worldreward.gemini_client import GeminiClient
 from worldreward.generator import ScenarioGenerator
+from worldreward.paths import (
+    get_config_search_dirs,
+    get_datasets_dir,
+    get_output_dir,
+    get_primary_configs_dir,
+    get_results_dir,
+    get_videos_dir,
+)
 from worldreward.scorer import print_score_report, write_results
 from worldreward.verifier import Verifier
 from worldreward.video_generator import VideoGenerator
@@ -15,12 +24,12 @@ from worldreward.video_generator import VideoGenerator
 
 # ─── Directory layout ────────────────────────────────────────────────
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # src/worldreward/ → project root
-CONFIGS_DIR = PROJECT_ROOT / "configs"
-OUTPUT_DIR = PROJECT_ROOT / "output"
-DATASETS_DIR = OUTPUT_DIR / "datasets"
-VIDEOS_DIR = OUTPUT_DIR / "videos"
-RESULTS_DIR = OUTPUT_DIR / "results"
+CONFIGS_DIR = get_primary_configs_dir()
+CONFIG_SEARCH_DIRS = get_config_search_dirs()
+OUTPUT_DIR = get_output_dir()
+DATASETS_DIR = get_datasets_dir()
+VIDEOS_DIR = get_videos_dir()
+RESULTS_DIR = get_results_dir()
 
 
 # ─── Pipeline commands (used by both CLI and REPL) ───────────────────
@@ -32,9 +41,9 @@ def extract_run_id(dataset_path: Path) -> str:
 
 def run_generate(domain: str, count: int = 10, model: str | None = None) -> None:
     """Generate a physics scenario dataset."""
-    config_path = CONFIGS_DIR / f"{domain}.yaml"
-    if not config_path.exists():
-        available = list_available_domains(CONFIGS_DIR)
+    config_path = resolve_domain_config_path(domain, CONFIG_SEARCH_DIRS)
+    if not config_path:
+        available = list_available_domains(CONFIG_SEARCH_DIRS)
         print(f"Error: Domain '{domain}' not found. Available: {', '.join(available)}")
         return
 
@@ -42,13 +51,17 @@ def run_generate(domain: str, count: int = 10, model: str | None = None) -> None
     print("  World Reward — Dataset Generator")
     print("=" * 60)
 
-    client = GeminiClient(model=model)
-    generator = ScenarioGenerator(client)
-    output_path = generator.generate(
-        config_path=config_path,
-        count=count,
-        output_dir=DATASETS_DIR,
-    )
+    try:
+        client = GeminiClient(model=model)
+        generator = ScenarioGenerator(client)
+        output_path = generator.generate(
+            config_path=config_path,
+            count=count,
+            output_dir=DATASETS_DIR,
+        )
+    except WorldRewardError as e:
+        print(f"Error: {e}")
+        return
 
     print("=" * 60)
     print(f"  Done! Dataset: {output_path}")
@@ -69,8 +82,12 @@ def run_videos(dataset: str) -> None:
     print("  World Reward — Video Generator (Veo 3.1)")
     print("=" * 60)
 
-    gen = VideoGenerator()
-    gen.generate_from_dataset(dataset_path, videos_out)
+    try:
+        gen = VideoGenerator()
+        gen.generate_from_dataset(dataset_path, videos_out)
+    except WorldRewardError as e:
+        print(f"Error: {e}")
+        return
 
     print("=" * 60)
     print(f"  Done! Videos saved to: {videos_out}")
@@ -95,8 +112,12 @@ def run_verify(dataset: str, videos_dir: str | None = None) -> None:
     print("  World Reward — Physics Verifier (Gemini 3 Pro)")
     print("=" * 60)
 
-    verifier = Verifier()
-    results = verifier.verify_dataset(dataset_path, vdir)
+    try:
+        verifier = Verifier()
+        results = verifier.verify_dataset(dataset_path, vdir)
+    except WorldRewardError as e:
+        print(f"Error: {e}")
+        return
 
     if results:
         results_path = RESULTS_DIR / f"results_{run_id}.csv"
@@ -108,9 +129,9 @@ def run_verify(dataset: str, videos_dir: str | None = None) -> None:
 
 def run_list_domains() -> None:
     """List available domain configurations."""
-    domains = list_available_domains(CONFIGS_DIR)
+    domains = list_available_domains(CONFIG_SEARCH_DIRS)
     if not domains:
-        print("No domain configs found in configs/")
+        print("No domain configs found.")
         return
     print("Available domains:")
     for domain in domains:
@@ -119,7 +140,7 @@ def run_list_domains() -> None:
 
 # ─── Argparse (direct CLI mode) ─────────────────────────────────────
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments for direct CLI mode."""
     parser = argparse.ArgumentParser(
         description="World Reward — Physics-verifiable evaluation pipeline for world models.",
@@ -127,7 +148,7 @@ def parse_args() -> argparse.Namespace:
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    available = list_available_domains(CONFIGS_DIR)
+    available = list_available_domains(CONFIG_SEARCH_DIRS)
     domains_help = f"Available: {', '.join(available)}" if available else "No configs found"
 
     gen_parser = subparsers.add_parser("generate", help="Generate a physics scenario dataset using Gemini")
@@ -144,4 +165,4 @@ def parse_args() -> argparse.Namespace:
 
     subparsers.add_parser("list-domains", help="List available domain configurations")
 
-    return parser.parse_args()
+    return parser.parse_args(argv)

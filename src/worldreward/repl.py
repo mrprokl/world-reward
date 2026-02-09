@@ -10,7 +10,7 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.history import InMemoryHistory
 
 from worldreward.cli import (
-    CONFIGS_DIR,
+    CONFIG_SEARCH_DIRS,
     DATASETS_DIR,
     VIDEOS_DIR,
     run_generate,
@@ -19,6 +19,7 @@ from worldreward.cli import (
     run_videos,
 )
 from worldreward.config_loader import list_available_domains
+from worldreward.paths import resolve_api_key, save_api_key
 
 
 # ─── Banner & help ───────────────────────────────────────────────────
@@ -127,13 +128,56 @@ def _list_files(directory: Path, pattern: str = "*.csv") -> list[Path]:
     return sorted(directory.glob(pattern))
 
 
+def _maybe_setup_api_key(session: PromptSession) -> None:
+    """Prompt for API key on REPL startup when no key is configured."""
+    if resolve_api_key():
+        return
+
+    print("\n\033[1;33mNo Gemini API key detected.\033[0m")
+    print("Set GEMINI_API_KEY in your environment or configure one now.")
+    print("A configured key is stored at ~/.worldreward/config.toml.")
+
+    try:
+        should_configure = session.prompt(
+            HTML("<b><ansigreen>  ❯ </ansigreen></b>Configure API key now? <ansigray>[Y/n]</ansigray>: "),
+        ).strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print("  Skipping setup.")
+        return
+
+    if should_configure in {"n", "no"}:
+        print("  Setup skipped. Commands requiring API access will fail until a key is configured.")
+        return
+
+    try:
+        api_key = session.prompt(
+            HTML("<b><ansigreen>  ❯ </ansigreen></b>Gemini API key: "),
+            is_password=True,
+        ).strip()
+    except (KeyboardInterrupt, EOFError):
+        print("  Setup cancelled.")
+        return
+
+    if not api_key:
+        print("  Empty key ignored.")
+        return
+
+    try:
+        config_path = save_api_key(api_key)
+    except Exception as e:
+        print(f"  Failed to save API key: {e}")
+        return
+
+    print(f"  ✅ API key saved to: {config_path}")
+
+
 # ─── Wizards ─────────────────────────────────────────────────────────
 
 def _wizard_generate(session: PromptSession) -> None:
     """Step-by-step wizard for /generate."""
-    domains = list_available_domains(CONFIGS_DIR)
+    domains = list_available_domains(CONFIG_SEARCH_DIRS)
     if not domains:
-        print("  No domain configs found in configs/")
+        print("  No domain configs found.")
         return
 
     domain = _select_from_list("Select a domain:", domains, session)
@@ -233,6 +277,7 @@ def run_repl() -> None:
             "<ansigray>  /help · /generate → /videos → /verify · /quit</ansigray>"
         ),
     )
+    _maybe_setup_api_key(session)
 
     while True:
         try:
