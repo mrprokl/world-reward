@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from worldreward.models import CategoryConfig, Confidence, DomainConfig, RewardScore, Scenario, VerificationResult
+from worldreward.models import (
+    CategoryConfig,
+    Confidence,
+    DomainConfig,
+    RewardScore,
+    Scenario,
+    VerificationResult,
+)
 
 
 def test_scenario_to_dict_serializes_confidence() -> None:

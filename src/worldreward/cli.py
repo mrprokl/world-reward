@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from worldreward.config_loader import list_available_domains, resolve_domain_config_path
+from worldreward.config_loader import (
+    list_available_domains,
+    resolve_domain_config_path,
+)
 from worldreward.exceptions import WorldRewardError
 from worldreward.gemini_client import GeminiClient
 from worldreward.generator import ScenarioGenerator
@@ -20,7 +23,6 @@ from worldreward.paths import (
 from worldreward.scorer import print_score_report, write_results
 from worldreward.verifier import Verifier
 from worldreward.video_generator import VideoGenerator
-
 
 # ─── Directory layout ────────────────────────────────────────────────
 
