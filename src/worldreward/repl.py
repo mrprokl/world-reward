@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shlex
+from collections.abc import Callable
 from pathlib import Path
 
 from prompt_toolkit import PromptSession
@@ -20,6 +21,9 @@ from worldreward.cli import (
 )
 from worldreward.config_loader import list_available_domains
 from worldreward.paths import resolve_api_key, save_api_key
+
+ReplHandler = Callable[[list[str], PromptSession], None]
+
 
 # ─── Banner & help ───────────────────────────────────────────────────
 
@@ -248,14 +252,14 @@ def _wizard_verify(session: PromptSession) -> None:
 
 # ─── Command dispatch ────────────────────────────────────────────────
 
-def _make_handler(wizard_fn):
+def _make_handler(wizard_fn: Callable[[PromptSession], None]) -> ReplHandler:
     """Wrap a wizard function into a REPL command handler."""
     def handler(_tokens: list[str], session: PromptSession) -> None:
         wizard_fn(session)
     return handler
 
 
-REPL_COMMANDS: dict[str, object] = {
+REPL_COMMANDS: dict[str, ReplHandler] = {
     "/generate": _make_handler(_wizard_generate),
     "/videos": _make_handler(_wizard_videos),
     "/verify": _make_handler(_wizard_verify),
@@ -304,7 +308,7 @@ def run_repl() -> None:
         cmd_args = tokens[1:]
 
         handler = REPL_COMMANDS.get(cmd)
-        if handler:
+        if handler is not None:
             try:
                 handler(cmd_args, session)
             except Exception as e:

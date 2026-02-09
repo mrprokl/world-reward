@@ -9,6 +9,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -25,7 +26,7 @@ class _PendingVideo:
     """Tracks an in-flight Veo generation operation."""
 
     scenario_id: str
-    operation: object  # google.genai Operation
+    operation: Any
     output_path: Path
     done: bool = False
     error: str | None = None

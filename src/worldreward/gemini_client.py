@@ -62,7 +62,11 @@ class GeminiClient:
         except Exception as e:
             raise GeminiAPIError(str(e)) from e
 
-        return self._parse_json_response(response.text)
+        response_text = response.text
+        if not response_text:
+            raise ParsingError("Empty response body from Gemini API.")
+
+        return self._parse_json_response(response_text)
 
     @staticmethod
     def _parse_json_response(text: str) -> list[dict]:

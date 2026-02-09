@@ -110,15 +110,22 @@ class Verifier:
                 video_file = self._client.files.upload(file=str(video_path))
 
             # Wait for file to become ACTIVE (processing takes a few seconds)
+            state_name = video_file.state.name if video_file.state else None
             with Spinner("Processing video"):
-                while video_file.state.name == "PROCESSING":
+                while state_name == "PROCESSING":
                     time.sleep(2)
+                    if not video_file.name:
+                        raise VerificationError(
+                            scenario["scenario_id"],
+                            "Uploaded video has no retrievable file name.",
+                        )
                     video_file = self._client.files.get(name=video_file.name)
+                    state_name = video_file.state.name if video_file.state else None
 
-            if video_file.state.name != "ACTIVE":
+            if state_name != "ACTIVE":
                 raise VerificationError(
                     scenario["scenario_id"],
-                    f"File upload failed — state: {video_file.state.name}",
+                    f"File upload failed — state: {state_name or 'UNKNOWN'}",
                 )
 
             with Spinner("Analyzing with Gemini"):
@@ -146,7 +153,13 @@ class Verifier:
                         },
                     ),
                 )
-            vlm_answer, vlm_reasoning = _parse_verification_response(response.text)
+            response_text = response.text
+            if not response_text:
+                raise VerificationError(
+                    scenario["scenario_id"],
+                    "Gemini returned an empty verification response.",
+                )
+            vlm_answer, vlm_reasoning = _parse_verification_response(response_text)
         except VerificationError:
             raise
         except Exception as e:

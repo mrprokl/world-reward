@@ -3,14 +3,9 @@
 from __future__ import annotations
 
 import os
+import tomllib
 from pathlib import Path
 from typing import Any
-
-try:  # Python 3.11+
-    import tomllib  # type: ignore[attr-defined]
-except ModuleNotFoundError:
-    tomllib = None  # type: ignore[assignment]
-
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_DIR.parent.parent
@@ -121,11 +116,9 @@ def load_user_config() -> dict[str, Any]:
     config_file = get_user_config_file()
     if not config_file.exists():
         return {}
-    if tomllib is not None:
-        with open(config_file, "rb") as f:
-            data = tomllib.load(f)
-        return data if isinstance(data, dict) else {}
-    return _load_user_config_fallback(config_file)
+    with open(config_file, "rb") as f:
+        data = tomllib.load(f)
+    return data if isinstance(data, dict) else {}
 
 
 def resolve_api_key(explicit_api_key: str | None = None) -> str | None:
@@ -152,38 +145,6 @@ def resolve_api_key(explicit_api_key: str | None = None) -> str | None:
             return value.strip()
 
     return None
-
-
-def _load_user_config_fallback(config_file: Path) -> dict[str, Any]:
-    """Best-effort parser for simple TOML key/value files on Python <3.11."""
-    data: dict[str, Any] = {}
-    current_section: str | None = None
-
-    for line in config_file.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if stripped.startswith("[") and stripped.endswith("]"):
-            current_section = stripped[1:-1].strip()
-            if current_section and current_section not in data:
-                data[current_section] = {}
-            continue
-        if "=" not in stripped:
-            continue
-        key, raw_value = stripped.split("=", 1)
-        key = key.strip()
-        value = raw_value.strip().strip('"').strip("'")
-
-        if current_section:
-            section = data.get(current_section)
-            if not isinstance(section, dict):
-                section = {}
-                data[current_section] = section
-            section[key] = value
-        else:
-            data[key] = value
-
-    return data
 
 
 def _dump_toml(data: dict[str, Any]) -> str:
