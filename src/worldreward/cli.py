@@ -21,6 +21,11 @@ from worldreward.paths import (
     get_videos_dir,
 )
 from worldreward.scorer import print_score_report, write_results
+from worldreward.setup_wizard import (
+    configure_api_key_interactive,
+    render_config_summary,
+    run_setup_wizard,
+)
 from worldreward.verifier import Verifier
 from worldreward.video_generator import VideoGenerator
 
@@ -140,6 +145,19 @@ def run_list_domains() -> None:
         print(f"  - {domain}")
 
 
+def run_setup() -> None:
+    """Run first-time setup wizard."""
+    run_setup_wizard()
+
+
+def run_config(set_api_key: bool = False, show_api_key: bool = False) -> None:
+    """Show and optionally update current configuration."""
+    if set_api_key:
+        if not configure_api_key_interactive():
+            return
+    print(render_config_summary(show_api_key=show_api_key))
+
+
 # ─── Argparse (direct CLI mode) ─────────────────────────────────────
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -166,5 +184,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ver_parser.add_argument("--videos-dir", type=str, default=None, help="Directory with video files")
 
     subparsers.add_parser("list-domains", help="List available domain configurations")
+    subparsers.add_parser("setup", help="Run first-time setup wizard")
+
+    config_parser = subparsers.add_parser("config", help="View or update current configuration")
+    config_parser.add_argument(
+        "--set-api-key",
+        action="store_true",
+        help="Prompt for a new API key and save it to ~/.worldreward/config.toml",
+    )
+    config_parser.add_argument(
+        "--show-api-key",
+        action="store_true",
+        help="Show API key in plain text (unsafe for shared terminals)",
+    )
 
     return parser.parse_args(argv)

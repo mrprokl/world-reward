@@ -18,3 +18,15 @@ def test_parse_args_verify_with_optional_videos_dir() -> None:
     assert args.command == "verify"
     assert args.dataset.endswith("demo.csv")
     assert args.videos_dir.endswith("demo")
+
+
+def test_parse_args_setup_command() -> None:
+    args = parse_args(["setup"])
+    assert args.command == "setup"
+
+
+def test_parse_args_config_command_with_flags() -> None:
+    args = parse_args(["config", "--set-api-key", "--show-api-key"])
+    assert args.command == "config"
+    assert args.set_api_key is True
+    assert args.show_api_key is True

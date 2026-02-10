@@ -42,6 +42,9 @@ cp .env.example .env
 # Optional: skip .env and configure on first REPL launch
 # worldreward will prompt for the key and store it in ~/.worldreward/config.toml
 
+# Optional: explicit first-run setup
+worldreward setup
+
 # 4. Launch interactive mode
 worldreward
 ```
@@ -77,6 +80,12 @@ For scripting or CI, use subcommands directly:
 # List available domains
 worldreward list-domains
 
+# Run setup wizard anytime
+worldreward setup
+
+# Show effective configuration (masked API key)
+worldreward config
+
 # Step 1: Generate scenario dataset
 worldreward generate --domain autonomous_driving --count 5
 
@@ -92,7 +101,12 @@ worldreward generate --domain public_safety --count 10 --model gemini-2.5-flash
 
 API key resolution order:
 1. `GEMINI_API_KEY` environment variable (`.env` supported)
-2. `~/.worldreward/config.toml` (written by REPL bootstrap)
+2. `~/.worldreward/config.toml` (written by setup/REPL bootstrap)
+
+Configuration commands:
+1. `worldreward setup` — first-run setup and API key validation
+2. `worldreward config` — show effective configuration and paths
+3. `worldreward config --set-api-key` — update API key interactively
 
 ## Pipeline
 
@@ -144,10 +158,16 @@ flowchart TB
 
 ## Output Structure
 
-Each run is linked by a shared run ID (`{domain}_{timestamp}`):
+Each run is linked by a shared run ID (`{domain}_{timestamp}`).
+
+Output location:
+1. Repository checkout mode: `output/` under the repo root
+2. Installed CLI mode: `~/.worldreward/output/`
+
+Typical layout:
 
 ```
-output/
+~/.worldreward/output/
 ├── datasets/   autonomous_driving_20260207_131855.csv
 ├── videos/     autonomous_driving_20260207_131855/AD-001.mp4, AD-002.mp4, ...
 └── results/    results_autonomous_driving_20260207_131855.csv
@@ -206,6 +226,8 @@ worldreward generate --domain my_domain --count 10
 ├── src/worldreward/
 │   ├── cli.py              # Shared pipeline commands + argparse
 │   ├── repl.py             # Interactive REPL with wizards + bottom toolbar
+│   ├── setup_wizard.py     # First-run setup + config rendering
+│   ├── paths.py            # Runtime path resolution + local config storage
 │   ├── spinner.py          # Animated terminal spinner for API calls
 │   ├── models.py           # Scenario, VerificationResult, RewardScore dataclasses
 │   ├── config_loader.py    # YAML config loading & validation
@@ -216,7 +238,8 @@ worldreward generate --domain my_domain --count 10
 │   ├── verifier.py         # Gemini 3 Pro video analysis + physics verification
 │   ├── scorer.py           # Reward aggregation + terminal reporting
 │   ├── dataset_writer.py   # CSV read/write (shared loader)
-│   └── exceptions.py       # Custom domain errors
+│   ├── exceptions.py       # Custom domain errors
+│   └── builtin_configs/    # Packaged default domain YAMLs
 ├── configs/
 │   ├── autonomous_driving.yaml
 │   └── public_safety.yaml

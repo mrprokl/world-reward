@@ -8,6 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from worldreward.paths import ensure_runtime_layout
+
 
 def _load_env_files() -> None:
     """Load .env from cwd and repository-style locations when available."""
@@ -30,11 +32,14 @@ def main() -> None:
     warnings.filterwarnings("ignore", message=".*urllib3.*")
 
     _load_env_files()
+    ensure_runtime_layout(copy_builtin_configs=True)
 
     from worldreward.cli import (  # Lazy import so env vars are loaded first.
         parse_args,
+        run_config,
         run_generate,
         run_list_domains,
+        run_setup,
         run_verify,
         run_videos,
     )
@@ -49,8 +54,12 @@ def main() -> None:
             run_verify(args.dataset, args.videos_dir)
         elif args.command == "list-domains":
             run_list_domains()
+        elif args.command == "setup":
+            run_setup()
+        elif args.command == "config":
+            run_config(set_api_key=args.set_api_key, show_api_key=args.show_api_key)
         else:
-            print("Usage: worldreward {generate|videos|verify|list-domains} --help")
+            print("Usage: worldreward {generate|videos|verify|list-domains|setup|config} --help")
             sys.exit(1)
         return
 

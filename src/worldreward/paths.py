@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,12 +18,46 @@ _ENV_CONFIGS = "WORLDREWARD_CONFIGS_DIR"
 _ENV_OUTPUT = "WORLDREWARD_OUTPUT_DIR"
 
 
+@dataclass(frozen=True)
+class RuntimeLayout:
+    """Resolved and provisioned runtime paths."""
+
+    app_dir: Path
+    config_file: Path
+    user_configs_dir: Path
+    user_output_dir: Path
+    datasets_dir: Path
+    videos_dir: Path
+    results_dir: Path
+    copied_builtin_configs: tuple[Path, ...] = ()
+
+
 def get_app_dir() -> Path:
     """Return the app home directory used outside repository mode."""
     env_home = os.getenv(_ENV_HOME)
     if env_home:
         return Path(env_home).expanduser()
     return Path.home() / APP_DIRNAME
+
+
+def get_builtin_configs_dir() -> Path:
+    """Return package-bundled config directory."""
+    return PACKAGE_DIR / "builtin_configs"
+
+
+def get_user_configs_dir() -> Path:
+    """Return user config directory (`~/.worldreward/configs`)."""
+    return get_app_dir() / "configs"
+
+
+def get_user_output_dir() -> Path:
+    """Return user output directory (`~/.worldreward/output`)."""
+    return get_app_dir() / "output"
+
+
+def is_repo_checkout_mode() -> bool:
+    """Whether this execution context is a repository checkout."""
+    return (REPO_ROOT / ".git").exists() and (REPO_ROOT / "configs").exists()
 
 
 def get_config_search_dirs() -> list[Path]:
@@ -32,18 +68,15 @@ def get_config_search_dirs() -> list[Path]:
 
     dirs: list[Path] = []
     repo_configs = REPO_ROOT / "configs"
-    user_configs = get_app_dir() / "configs"
-    package_configs = PACKAGE_DIR / "builtin_configs"
+    if repo_configs.exists():
+        dirs.append(repo_configs)
+    dirs.append(get_user_configs_dir())
 
-    for directory in (repo_configs, user_configs, package_configs):
-        if directory.exists() and directory not in dirs:
-            dirs.append(directory)
+    package_configs = get_builtin_configs_dir()
+    if package_configs.exists():
+        dirs.append(package_configs)
 
-    # Keep deterministic fallback targets even before first run.
-    if not dirs:
-        dirs = [user_configs, package_configs]
-
-    return dirs
+    return _unique_paths(dirs)
 
 
 def get_primary_configs_dir() -> Path:
@@ -57,11 +90,9 @@ def get_output_dir() -> Path:
     if env_output:
         return Path(env_output).expanduser()
 
-    repo_output = REPO_ROOT / "output"
-    repo_configs = REPO_ROOT / "configs"
-    if repo_configs.exists():
-        return repo_output
-    return get_app_dir() / "output"
+    if is_repo_checkout_mode():
+        return REPO_ROOT / "output"
+    return get_user_output_dir()
 
 
 def get_datasets_dir() -> Path:
@@ -82,6 +113,47 @@ def get_results_dir() -> Path:
 def get_user_config_file() -> Path:
     """Return user config file path (`~/.worldreward/config.toml`)."""
     return get_app_dir() / "config.toml"
+
+
+def ensure_runtime_layout(copy_builtin_configs: bool = True) -> RuntimeLayout:
+    """Create runtime directories and optionally seed user configs."""
+    app_dir = get_app_dir()
+    user_configs = get_user_configs_dir()
+    user_output = get_user_output_dir()
+    datasets_dir = user_output / "datasets"
+    videos_dir = user_output / "videos"
+    results_dir = user_output / "results"
+    config_file = get_user_config_file()
+
+    for directory in (app_dir, user_configs, user_output, datasets_dir, videos_dir, results_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    if os.name == "posix":
+        try:
+            os.chmod(app_dir, 0o700)
+        except OSError:
+            pass
+
+    copied_builtin: list[Path] = []
+    if copy_builtin_configs:
+        builtin_configs = get_builtin_configs_dir()
+        if builtin_configs.exists():
+            for source in sorted(builtin_configs.glob("*.yaml")):
+                destination = user_configs / source.name
+                if not destination.exists():
+                    shutil.copy2(source, destination)
+                    copied_builtin.append(destination)
+
+    return RuntimeLayout(
+        app_dir=app_dir,
+        config_file=config_file,
+        user_configs_dir=user_configs,
+        user_output_dir=user_output,
+        datasets_dir=datasets_dir,
+        videos_dir=videos_dir,
+        results_dir=results_dir,
+        copied_builtin_configs=tuple(copied_builtin),
+    )
 
 
 def save_api_key(api_key: str) -> Path:
@@ -116,19 +188,29 @@ def load_user_config() -> dict[str, Any]:
     config_file = get_user_config_file()
     if not config_file.exists():
         return {}
-    with open(config_file, "rb") as f:
-        data = tomllib.load(f)
+    try:
+        with open(config_file, "rb") as f:
+            data = tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
     return data if isinstance(data, dict) else {}
 
 
 def resolve_api_key(explicit_api_key: str | None = None) -> str | None:
     """Resolve API key from explicit arg, env var, or user config."""
+    api_key, _source = resolve_api_key_with_source(explicit_api_key)
+    return api_key
+
+
+def resolve_api_key_with_source(explicit_api_key: str | None = None) -> tuple[str | None, str]:
+    """Resolve API key and return `(value, source)`."""
     if explicit_api_key:
-        return explicit_api_key
+        return explicit_api_key, "explicit"
 
     env_key = os.getenv("GEMINI_API_KEY")
     if env_key:
-        return env_key
+        return env_key, "env"
 
     config = load_user_config()
 
@@ -136,15 +218,15 @@ def resolve_api_key(explicit_api_key: str | None = None) -> str | None:
     for key in ("gemini_api_key", "GEMINI_API_KEY"):
         value = config.get(key)
         if isinstance(value, str) and value.strip():
-            return value.strip()
+            return value.strip(), "config"
 
     auth = config.get("auth")
     if isinstance(auth, dict):
         value = auth.get("gemini_api_key")
         if isinstance(value, str) and value.strip():
-            return value.strip()
+            return value.strip(), "config"
 
-    return None
+    return None, "missing"
 
 
 def _dump_toml(data: dict[str, Any]) -> str:
@@ -192,3 +274,12 @@ def _toml_scalar(value: Any) -> str:
         .replace("\n", "\\n")
     )
     return f'"{escaped}"'
+
+
+def _unique_paths(paths: list[Path]) -> list[Path]:
+    """Keep path order while removing duplicates."""
+    deduped: list[Path] = []
+    for path in paths:
+        if path not in deduped:
+            deduped.append(path)
+    return deduped

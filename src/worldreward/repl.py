@@ -20,7 +20,8 @@ from worldreward.cli import (
     run_videos,
 )
 from worldreward.config_loader import list_available_domains
-from worldreward.paths import resolve_api_key, save_api_key
+from worldreward.paths import ensure_runtime_layout, resolve_api_key, save_api_key
+from worldreward.setup_wizard import validate_api_key
 
 ReplHandler = Callable[[list[str], PromptSession], None]
 
@@ -152,26 +153,37 @@ def _maybe_setup_api_key(session: PromptSession) -> None:
         print("  Setup skipped. Commands requiring API access will fail until a key is configured.")
         return
 
-    try:
-        api_key = session.prompt(
-            HTML("<b><ansigreen>  ❯ </ansigreen></b>Gemini API key: "),
-            is_password=True,
-        ).strip()
-    except (KeyboardInterrupt, EOFError):
-        print("  Setup cancelled.")
+    for attempt in range(1, 4):
+        try:
+            api_key = session.prompt(
+                HTML("<b><ansigreen>  ❯ </ansigreen></b>Gemini API key: "),
+                is_password=True,
+            ).strip()
+        except (KeyboardInterrupt, EOFError):
+            print("  Setup cancelled.")
+            return
+
+        if not api_key:
+            print("  Empty key ignored.")
+            continue
+
+        is_valid, error = validate_api_key(api_key)
+        if not is_valid:
+            print(f"  Invalid key: {error or 'Unknown error'}")
+            if attempt < 3:
+                print("  Please try again.")
+            continue
+
+        try:
+            config_path = save_api_key(api_key)
+        except Exception as e:
+            print(f"  Failed to save API key: {e}")
+            return
+
+        print(f"  ✅ API key saved to: {config_path}")
         return
 
-    if not api_key:
-        print("  Empty key ignored.")
-        return
-
-    try:
-        config_path = save_api_key(api_key)
-    except Exception as e:
-        print(f"  Failed to save API key: {e}")
-        return
-
-    print(f"  ✅ API key saved to: {config_path}")
+    print("  Setup aborted after 3 failed attempts.")
 
 
 # ─── Wizards ─────────────────────────────────────────────────────────
@@ -272,6 +284,7 @@ REPL_COMMANDS: dict[str, ReplHandler] = {
 
 def run_repl() -> None:
     """Launch the interactive REPL with step-by-step wizards."""
+    ensure_runtime_layout(copy_builtin_configs=True)
     print(BANNER)
 
     session: PromptSession = PromptSession(
