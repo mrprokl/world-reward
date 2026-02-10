@@ -222,8 +222,9 @@ worldreward generate --domain my_domain --count 10
 ## Architecture
 
 ```
-├── main.py                     # Thin entrypoint — CLI/REPL dispatch
+├── main.py                     # Dev wrapper entrypoint from repo root
 ├── src/worldreward/
+│   ├── main.py             # Runtime entrypoint — CLI/REPL dispatch
 │   ├── cli.py              # Shared pipeline commands + argparse
 │   ├── repl.py             # Interactive REPL with wizards + bottom toolbar
 │   ├── setup_wizard.py     # First-run setup + config rendering
@@ -242,6 +243,7 @@ worldreward generate --domain my_domain --count 10
 │   └── builtin_configs/    # Packaged default domain YAMLs
 ├── configs/
 │   ├── autonomous_driving.yaml
+│   ├── marine_maritime.yaml
 │   └── public_safety.yaml
 ├── output/
 │   ├── datasets/           # Generated scenario CSV files
