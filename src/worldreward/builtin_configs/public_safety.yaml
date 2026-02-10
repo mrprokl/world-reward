@@ -15,6 +15,8 @@ context_prompt: >
   or event, and a yes/no question whose answer is physically unambiguous
   based on known laws of physics. Focus on scenarios relevant to emergency
   response, structural safety, and natural disaster simulation.
+  Avoid edge cases where outcomes depend on unknown material composition,
+  hidden reinforcement, or uncertain timing windows.
 
 id_prefix: PS
 
@@ -44,8 +46,8 @@ categories:
       Flood dynamics, water flow, buoyancy, and water damage.
       Tests correct fluid simulation in urban environments.
     example_scenarios:
-      - "Flash flood in narrow street — cars swept away by current"
-      - "Rising water level around wooden fence — fence eventually gives way"
+      - "Fast flood current in a narrow street above wheel height — small parked cars are pushed downstream"
+      - "Sealed empty plastic drum held underwater then released — it rises back to the surface"
       - "Heavy object dropped in deep water — sinks to bottom"
 
   - name: gravity_and_falling
@@ -54,14 +56,14 @@ categories:
       simulation of freefall, impact, and resulting damage.
     example_scenarios:
       - "Construction debris falling from 10th floor — accelerates, smashes on impact"
-      - "Person falling from height onto concrete — does not walk away uninjured"
-      - "Tree falling on parked car — roof crushed, windshield shattered"
+      - "Concrete block dropped from height onto pavement — impact produces visible fragmentation and dust"
+      - "Large tree trunk falling onto a parked car roof — roof structure collapses downward"
 
   - name: material_behavior
     description: >
       How materials respond to force, temperature, and environmental
       conditions. Tests glass shattering, metal bending, ice melting, etc.
     example_scenarios:
-      - "Glass window hit by rock — glass shatters"
+      - "Thin annealed glass window hit by a thrown rock — glass shatters"
       - "Ice sculpture in direct sunlight at 35°C — melts over time"
       - "Rubber tire run over by heavy machinery — deforms but does not shatter"

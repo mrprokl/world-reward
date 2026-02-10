@@ -15,6 +15,8 @@ context_prompt: >
   question whose answer is physically unambiguous based on known laws of physics
   (buoyancy, fluid dynamics, Archimedes' principle, wave mechanics).
   Focus on scenarios where the expected physical outcome is binary and indisputable.
+  Avoid edge cases where outcomes depend on unknown hull integrity, hidden
+  ballast state, or unobserved vessel damage history.
 
 id_prefix: MM
 
@@ -35,7 +37,7 @@ categories:
       Tests whether the world model correctly simulates hydrodynamic forces,
       drift, and wave-object interactions.
     example_scenarios:
-      - "Small rowboat hit by large ocean wave broadside — capsizes"
+      - "Unpowered floating debris in a strong river current — drifts downstream with the flow direction"
       - "Floating debris carried by strong river current toward bridge pylon — collides with pylon"
       - "Anchored buoy in heavy swell — bobs up and down but stays in place"
 
@@ -65,6 +67,6 @@ categories:
       vessels and structures. Tests correct simulation of wind forces,
       ice accumulation, and storm surge.
     example_scenarios:
-      - "Sailboat caught in hurricane-force winds — mast snaps under wind load"
-      - "Ice accumulating on fishing trawler superstructure — vessel becomes top-heavy, stability compromised"
-      - "Lightning striking metal mast of a yacht — electrical discharge through the mast, no fire on metal"
+      - "Subzero storm with sea spray hitting vessel superstructure — visible ice accumulation forms on exposed rails"
+      - "Hurricane-force crosswind hitting a sailboat under full sail — boat heels sharply leeward"
+      - "Lightning striking a yacht's metal mast — bright discharge travels along the mast toward the water"

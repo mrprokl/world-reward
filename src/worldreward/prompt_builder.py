@@ -48,10 +48,11 @@ RULES:
 2. The verification_question must be answerable by WATCHING the video output — the physical outcome must be VISIBLE.
 3. The video_prompt must describe ONLY the setup and the action. The camera must stay on the scene long enough for the outcome to be observable, but the prompt must NOT describe what the outcome looks like. No words like "crumples", "shatters", "breaks", "remains intact", "bounces", "sinks", "floats" etc. in the video_prompt. The video model must render the physics on its own.
 4. The video_prompt must NEVER leak the expected answer, the physical result, or any hint about correctness.
-5. Distribute scenarios roughly evenly across categories.
-6. Vary the settings (different locations, times of day, weather, camera angles).
-7. Prefer "high" confidence scenarios — these are unit tests for reality.
-8. Do NOT include any markdown formatting, code fences, or explanations — ONLY the JSON array.
+5. Avoid scenarios where the correct answer depends on hidden properties (unknown material type, hidden damage, unknown reinforcement, unknown load history). If needed, explicitly constrain material and setup so the outcome is near-certain.
+6. Distribute scenarios roughly evenly across categories.
+7. Vary the settings (different locations, times of day, weather, camera angles).
+8. Prefer "high" confidence scenarios — these are unit tests for reality.
+9. Do NOT include any markdown formatting, code fences, or explanations — ONLY the JSON array.
 
 EXAMPLE OUTPUT:
 [
