@@ -30,3 +30,9 @@ jobs:
 
       - name: Pytest
         run: pytest
+
+      - name: Build package and validate metadata
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          python -m twine check dist/*
