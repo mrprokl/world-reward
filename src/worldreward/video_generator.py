@@ -42,6 +42,7 @@ class VideoGenerator:
 
     DEFAULT_MODEL = "veo-3.1-generate-preview"
     POLL_INTERVAL_SECONDS = 10
+    MAX_POLL_SECONDS = 1800
 
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         """Initialize the Veo client.
@@ -123,7 +124,19 @@ class VideoGenerator:
         print(f"\n⏳ {len(pending)} operations launched — polling for completion...")
 
         # --- Phase 2: poll all operations concurrently ---
+        deadline = time.monotonic() + self.MAX_POLL_SECONDS
         while any(not p.done for p in pending):
+            if time.monotonic() >= deadline:
+                timeout_msg = (
+                    f"timed out after {self.MAX_POLL_SECONDS}s waiting for Veo generation"
+                )
+                for p in pending:
+                    if not p.done:
+                        p.done = True
+                        p.error = timeout_msg
+                        print(f"❌ {p.scenario_id}: {timeout_msg}")
+                break
+
             time.sleep(self.POLL_INTERVAL_SECONDS)
             for p in pending:
                 if p.done:

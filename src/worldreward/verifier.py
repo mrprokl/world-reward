@@ -29,6 +29,8 @@ class Verifier:
     """
 
     DEFAULT_MODEL = "gemini-3-pro-preview"
+    VIDEO_PROCESS_POLL_INTERVAL_SECONDS = 2
+    MAX_VIDEO_PROCESS_SECONDS = 300
 
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         """Initialize the verifier with a Gemini client.
@@ -111,9 +113,16 @@ class Verifier:
 
             # Wait for file to become ACTIVE (processing takes a few seconds)
             state_name = video_file.state.name if video_file.state else None
+            deadline = time.monotonic() + self.MAX_VIDEO_PROCESS_SECONDS
             with Spinner("Processing video"):
                 while state_name == "PROCESSING":
-                    time.sleep(2)
+                    if time.monotonic() >= deadline:
+                        raise VerificationError(
+                            scenario["scenario_id"],
+                            f"Timed out after {self.MAX_VIDEO_PROCESS_SECONDS}s waiting for uploaded video "
+                            "to become ACTIVE.",
+                        )
+                    time.sleep(self.VIDEO_PROCESS_POLL_INTERVAL_SECONDS)
                     if not video_file.name:
                         raise VerificationError(
                             scenario["scenario_id"],
