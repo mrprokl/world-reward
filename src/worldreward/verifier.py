@@ -106,10 +106,12 @@ class Verifier:
             VerificationError: If verification fails.
         """
         prompt = _build_verification_prompt(scenario["verification_question"])
+        uploaded_file_name: str | None = None
 
         try:
             with Spinner("Uploading video"):
                 video_file = self._client.files.upload(file=str(video_path))
+            uploaded_file_name = video_file.name
 
             # Wait for file to become ACTIVE (processing takes a few seconds)
             state_name = video_file.state.name if video_file.state else None
@@ -173,6 +175,8 @@ class Verifier:
             raise
         except Exception as e:
             raise VerificationError(scenario["scenario_id"], str(e)) from e
+        finally:
+            self._delete_uploaded_file(uploaded_file_name)
 
         reward = _compute_reward(vlm_answer, scenario["expected_answer"])
 
@@ -186,6 +190,17 @@ class Verifier:
             reward=reward,
             video_path=str(video_path),
         )
+
+    def _delete_uploaded_file(self, file_name: str | None) -> None:
+        """Best-effort cleanup for uploaded files in Gemini File API."""
+        if not file_name:
+            return
+
+        try:
+            self._client.files.delete(name=file_name)
+        except Exception:
+            # Cleanup failure should not fail verification flow.
+            pass
 
 
 def _build_verification_prompt(verification_question: str) -> str:
