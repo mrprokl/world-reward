@@ -108,6 +108,20 @@ Configuration commands:
 2. `worldreward config` — show effective configuration and paths
 3. `worldreward config --set-api-key` — update API key interactively
 
+## Troubleshooting
+
+- **`No API key provided`**
+  - Run `worldreward setup` or set `GEMINI_API_KEY` in your environment / `.env`.
+- **`Domain 'X' not found`**
+  - Run `worldreward list-domains` and use one of the listed config names.
+- **Video generation or verification appears stuck**
+  - Polling is time-bounded (video generation: 30 min max, upload processing: 5 min max).
+  - Re-run the failed step (`videos` or `verify`) after checking API quota/status.
+- **`python -m build` fails in restricted/offline environments**
+  - Use: `python -m build --no-isolation`
+- **Validate release artifacts locally**
+  - Use: `python -m twine check dist/*`
+
 ## Pipeline
 
 ```mermaid
