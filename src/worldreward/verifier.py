@@ -12,7 +12,7 @@ from worldreward.dataset_writer import load_scenarios_csv
 from worldreward.exceptions import GeminiAPIError, VerificationError
 from worldreward.models import RewardScore, VerificationResult
 from worldreward.paths import resolve_api_key
-from worldreward.spinner import Spinner
+from worldreward.spinner import ProgressBar, Spinner
 
 
 class Verifier:
@@ -68,15 +68,24 @@ class Verifier:
         results: list[VerificationResult] = []
 
         print(f"🔍 Verifying {len(scenarios)} scenarios with Gemini 3 Pro...")
+        progress = ProgressBar(len(scenarios), label="Verification") if scenarios else None
+        if progress:
+            progress.update(0)
 
         for idx, scenario in enumerate(scenarios, start=1):
             scenario_id = scenario["scenario_id"]
             video_path = videos_dir / f"{scenario_id}.mp4"
 
             if not video_path.exists():
+                if progress:
+                    progress.clear()
                 print(f"⚠️  [{idx}/{len(scenarios)}] {scenario_id}: video not found, skipping")
+                if progress:
+                    progress.update(idx)
                 continue
 
+            if progress:
+                progress.clear()
             print(f"🔎 [{idx}/{len(scenarios)}] {scenario_id}: verifying...")
 
             try:
@@ -89,7 +98,12 @@ class Verifier:
                       f"vlm={result.vlm_answer}")
             except VerificationError as e:
                 print(f"💥 [{idx}/{len(scenarios)}] {scenario_id}: {e}")
+            finally:
+                if progress:
+                    progress.update(idx)
 
+        if progress:
+            progress.finish()
         return results
 
     def _verify_single(self, scenario: dict, video_path: Path) -> VerificationResult:
